@@ -19,35 +19,39 @@ int pColorBBlue; // 0-255 , color B blue
 
 // tussen 0 en 100
 void SetSpeed(int s) {
-  
+  pSpeed = constrain(s, 0, 100);
 }
 
 // tussen 0 en 100
 void SetEffectIntensity(int i){
-
+  pIntensity = constrain(i, 0, 100);
 }
 
 // tussen 0 en het aantal effecten minus 1
 void SetEffect(int e){
-  
+  pEffect = constrain(e, 0, 0);
 }
 
 // tussen 0 en 1000 , de lichtkracht van kleur A
 void SetPowerA(int p){
-  
+  pPowerA = constrain(p, 0, 1000);
 }
 
 // tussen 0 en 1000 , de lichtkracht van kleur B
 void SetPowerB(int p){
-  
+  pPowerB = constrain(p, 0, 1000);
 }
 
-// tussen 0 en 256 , kleur A
+// tussen 0 en 255 , kleur A
 void SetColorA(int r, int g, int b){
-  
+  pColorARed   = constrain(r, 0, 255);
+  pColorAGreen = constrain(g, 0, 255);
+  pColorABlue  = constrain(b, 0, 255);
 }
 
-// tussen 0 en 256 , kleur B
+// tussen 0 en 255 , kleur B
 void SetColorB(int r, int g, int b){
-  
+  pColorBRed   = constrain(r, 0, 255);
+  pColorBGreen = constrain(g, 0, 255);
+  pColorBBlue  = constrain(b, 0, 255);
 }
