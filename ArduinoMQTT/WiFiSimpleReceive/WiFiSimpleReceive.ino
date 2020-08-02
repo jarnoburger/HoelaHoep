@@ -38,7 +38,7 @@ char pass[] = SECRET_PASS;    // your network password (use for WPA, or use as k
 WiFiClient wifiClient;
 MqttClient mqttClient(wifiClient);
 
-Led led(5);
+Led Led(6,100);
 
 const char broker[] = SECRET_IP;
 int        port     = SECRET_PORT;
@@ -117,5 +117,5 @@ void loop() {
     Serial.println();
   }
 
-  led.Loop();
+  Led.Loop();
 }
