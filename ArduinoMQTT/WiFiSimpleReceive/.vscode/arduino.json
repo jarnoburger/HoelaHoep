@@ -1,4 +1,5 @@
 {
     "board": "arduino:samd:nano_33_iot",
-    "sketch": "WiFiSimpleReceive.ino"
+    "sketch": "WiFiSimpleReceive.ino",
+    "output": "../ArduinoOutput"
 }

@@ -7,14 +7,18 @@
 // a pointer for one, which we'll then allocate later...
 Adafruit_NeoPixel *pixels;
 
-Led::Led(int pin, int numpixels){
+Led::Led(){
   _pixelFormat = NEO_GRB + NEO_KHZ800;
   _ledState = LOW;             // ledState used to set the LED
   _previousMillis = 0;        // will store last time LED was updated
   _interval = 5000;           // interval at which to blink (milliseconds)
+}
+
+void Led::Start(int pin, int numpixels)
+{
   _pin = pin;
   _numpixels = numpixels;
-  
+
   pinMode(pin, OUTPUT);
 
   // populeer hier een loopup tabel als we dat nodig hebben
@@ -53,18 +57,81 @@ void Led::Loop()
      
     // set the LED with the ledState of the variable:
     digitalWrite(_pin, _ledState);
+
+    Pow();
   }
+}
+
+void Led::SetEffect(int effect)
+{
+  _effect = effect;
 }
 
 void Led::Pow()
 {
-  pixels->clear(); // Set all pixel colors to 'off'
-  // The first NeoPixel in a strand is #0, second is 1, all the way up
+  // effects
+  // 1 : alles aan
+  // 2 : fade tussen 2 kleuren (daardoor ook strobe)
+  // 3 : roteer een streep met kleur A , de anderen zijn kleur B
+  // 4 : wave een streep met kleur A , de anderen zijn kleur B
+  // 5 : random met kleur A over kleur B
+  // 6 : color wipe
+
+  if (_effect == 0)
+  {
+    DoFull();
+  }
+  else if (_effect == 1)
+  {
+    DoFade();
+  }
+  else if (_effect == 2)
+  {
+    
+  }
+  else if (_effect == 3)
+  {
+    
+  }
+  else if (_effect == 4)
+  {
+    
+  }
+  else if (_effect == 5)
+  {
+    
+  }
+  else if (_effect == 6)
+  {
+    
+  }
+}
+
+void Led::DoFull()
+{
+    // The first NeoPixel in a strand is #0, second is 1, all the way up
   // to the count of pixels minus one.
   for(int i=0; i<_numpixels; i++) 
   {
     // For each pixel...
-    pixels->setPixelColor(i, pixels->Color(255, 255, 255));
+    pixels->setPixelColor(i, pixels->Color(_colorARed, _colorAGreen, _colorABlue));
+    pixels->show();   // Send the updated pixel colors to the hardware.
+  }
+}
+
+void Led::DoFade()
+{
+  // goto color A
+  for(int i=0; i<_numpixels; i++) 
+  {
+    pixels->setPixelColor(i, pixels->Color(_colorARed, _colorAGreen, _colorABlue));
+    pixels->show();   // Send the updated pixel colors to the hardware.
+  }
+
+  // goto color B
+  for(int i=0; i<_numpixels; i++) 
+  {
+    pixels->setPixelColor(i, pixels->Color(_colorBRed, _colorBGreen, _colorBBlue));
     pixels->show();   // Send the updated pixel colors to the hardware.
   }
 }
