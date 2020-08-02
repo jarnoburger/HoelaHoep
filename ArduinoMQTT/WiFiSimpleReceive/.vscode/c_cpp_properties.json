@@ -1,0 +1,31 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceRoot}",
+                "C:\\\\Program Files (x86)\\\\Arduino\\\\hardware\\\\arduino\\\\avr\\\\**",
+                "C:\\\\Program Files (x86)\\\\Arduino\\\\tools\\\\**",
+                "C:\\\\Program Files (x86)\\\\Arduino\\\\hardware\\\\tools\\\\**",
+                "C:\\\\Program Files (x86)\\\\Arduino\\\\libraries\\\\**",
+                "C:\\Program Files (x86)\\Arduino\\hardware\\arduino\\avr\\cores\\arduino",
+                "C:\\Program Files (x86)\\Arduino/hardware\\arduino\\avr\\variants\\standard",
+                "C:\\Program Files (x86)\\Arduino",
+                "H:\\OneDrive\\Documents\\Arduino\\libraries\\Adafruit_NeoPixel",
+                "H:\\OneDrive\\Documents\\Arduino\\libraries\\ArduinoMqttClient\\src",
+                "C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\**",
+                "C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.7\\**",
+                "C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.7\\cores\\arduino\\**"
+            ],
+            "forcedInclude": [
+                "C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.7\\cores\\arduino\\Arduino.h"
+            ],
+            "intelliSenseMode": "msvc-x64",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.26.28801/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c11",
+            "cppStandard": "c++17",
+            "defines": ["USBCON"]
+        }
+    ],
+    "version": 4
+}
