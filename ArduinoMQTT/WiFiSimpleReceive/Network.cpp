@@ -17,13 +17,19 @@
 // 2) Change port value from 1883 to 8883.
 // 3) Change broker value to a server with a known SSL/TLS root certificate flashed in the WiFi module.
 ///////please enter your sensitive data in the Secret tab/arduino_secrets.h
-char       ssid[]      = SECRET_SSID;     
-char       pass[]      = SECRET_PASS;    
-const char broker[]    = SECRET_IP;
-int        port        = SECRET_PORT;
-const char topic[]     = SECRET_TOPIC;
-String     topicRemote = SECRET_TOPICONMOBILE; 
-String     topicLocal  = SECRET_TOPICONARDUINO;
+char         ssid[]      = SECRET_SSID;     
+char         pass[]      = SECRET_PASS;    
+const char   broker[]    = SECRET_IP;
+int          port        = SECRET_PORT;
+const String topicStatus = "STATUS"; // published om te zien op de phone >> mqttClient.beginMessage() en mqttClient.endMessage
+const String topiccolorA = "COLORA"; // subscribed om te ontvangen op de arduino
+const String topiccolorB = "COLORB"; // subscribed om te ontvangen op de arduino
+const String topicSpeed  = "SPEED" ; // subscribed om te ontvangen op de arduino
+const String topicEffect = "EFFECT" ; // subscribed om te ontvangen op de arduino
+
+//const char topic[]     = SECRET_TOPIC;
+//String     topicRemote = SECRET_TOPICONMOBILE; 
+//String     topicLocal  = SECRET_TOPICONARDUINO;
 WiFiClient _wifiClient;
 MqttClient _mqttClient(_wifiClient);
 
@@ -62,28 +68,32 @@ void Network::Start(){
     while (1);
   }
 
+
   Serial.println("You're connected to the MQTT broker!");
   Serial.println();
 
+// subscribe to the topics that come from the phone
+  SubScribeToTopic(topiccolorA);
+  SubScribeToTopic(topiccolorB);
+  SubScribeToTopic(topicSpeed);
+  SubScribeToTopic(topicEffect);
+}
+
+void Network::SubScribeToTopic(String topic){
+  // subscribe to changes from phone
   Serial.print("Subscribing to topic: ");
-  Serial.println(topicLocal);
+  Serial.println(topic);
   Serial.println();
-
-  // subscribe to a topic
-  _mqttClient.subscribe(topicLocal);
-
-  // topics can be unsubscribed using:
-  // _mqttClient.unsubscribe(topic);
-
-  Serial.print("Waiting for messages on topic: ");
-  Serial.println(topicLocal);
-  Serial.println();
+  _mqttClient.subscribe(topic);
 }
 
 void Network::Loop(){
-  // call poll() regularly to allow the library to receive MQTT messages and
-  // send MQTT keep alives which avoids being disconnected by the broker
-  _mqttClient.poll();
+  // read if there are messages for subscribed topics
+  int messageSize = _mqttClient.parseMessage();
+  if (messageSize) {
+    // there are messages ! read them now.
+    OnMessage(messageSize);
+  }
 
   // avoid having delays in loop, we'll use the strategy from BlinkWithoutDelay
   // see: File -> Examples -> 02.Digital -> BlinkWithoutDelay for more info
@@ -93,39 +103,22 @@ void Network::Loop(){
     // save the last time a message was sent
     previousMillis = currentMillis;
 
-    SendHelloWorld();
+    SendDebug("Wazaa puppy!");
 
     count++;
   }
 }
 
-void Network::SendHelloWorld(){
-    String payload;
-
-    payload += "hello world!";
-    payload += " ";
-    payload += count;
-
-    Serial.print("Sending message to topic: ");
-    Serial.println(topicRemote);
-    Serial.println(payload);
-
-    // send message, the Print interface can be used to set the message contents
-    // in this case we know the size ahead of time, so the message payload can be streamed
-
+void Network::SendDebug(String message){
     bool retained = false;
     int qos = 1;
     bool dup = false;
-
-    _mqttClient.beginMessage(topicRemote, payload.length(), retained, qos, dup);
-    _mqttClient.print(payload);
+    _mqttClient.beginMessage(topicStatus, message.length(), retained, qos, dup);
+    _mqttClient.print(message);
     _mqttClient.endMessage();
-
-    Serial.println();
 }
 
-void Network::OnMessage(int messageSize){
-  // we received a message, print out the topic and contents
+void Network::DebugIncomingMessage(int messageSize){
   Serial.print("Received a message with topic '");
   Serial.print(_mqttClient.messageTopic());
   Serial.print("', duplicate = ");
@@ -137,12 +130,54 @@ void Network::OnMessage(int messageSize){
   Serial.print("', length ");
   Serial.print(messageSize);
   Serial.println(" bytes:");
+}
 
-  // use the Stream interface to print the contents
+void Network::OnMessage(int messageSize){
+  // we received a message, print out the topic and contents
+  DebugIncomingMessage(messageSize);
+
+  // get the topic
+  String topic = _mqttClient.messageTopic();
+
+  // get the value  
+  char c;
+  int i = 0;
+  char bericht[messageSize];
   while (_mqttClient.available()) {
-    Serial.print((char)_mqttClient.read());
+    c = _mqttClient.read();
+    bericht[i] = c;
+    i++;
+    //Serial.print((char)_mqttClient.read());
   }
-  Serial.println();
+  Serial.print("Created : ");
+  Serial.println(bericht);
 
   Serial.println();
 }
+
+//void Network::SendHelloWorld(){
+//    String payload;
+//
+//    payload += "I am the arduino!";
+//    payload += " ";
+//    payload += count;
+//
+//    Serial.print("Sending message to topic: [");
+//    Serial.print(topicRemote);
+//    Serial.print("] [");
+//    Serial.print(payload);
+//    Serial.println("]");
+//
+//    // send message, the Print interface can be used to set the message contents
+//    // in this case we know the size ahead of time, so the message payload can be streamed
+//
+//    bool retained = false;
+//    int qos = 1;
+//    bool dup = false;
+//
+//    _mqttClient.beginMessage(topicRemote, payload.length(), retained, qos, dup);
+//    _mqttClient.print(payload);
+//    _mqttClient.endMessage();
+//
+//    Serial.println();
+//}

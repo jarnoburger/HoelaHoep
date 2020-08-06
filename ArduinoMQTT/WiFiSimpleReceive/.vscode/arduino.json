@@ -1,5 +1,6 @@
 {
     "board": "arduino:samd:nano_33_iot",
     "sketch": "WiFiSimpleReceive.ino",
-    "output": "../ArduinoOutput"
+    "output": "../ArduinoOutput",
+    "port": "COM5"
 }

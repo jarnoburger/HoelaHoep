@@ -25,30 +25,21 @@ int count;
 void setup() {
   count = 0;
 
-  //Initialize serial and wait for port to open:
-  Serial.begin(9600);
-  while (!Serial) {
-    ; // wait for serial port to connect. Needed for native USB port only
-  }
+    //Initialize serial and wait for port to open:
+  Serial.begin(115200);
+  //  while (!Serial) {
+  //  ; // wait for serial port to connect. Needed for native USB port only
+  //}
+  Serial.println("*** Goededag meneertje !");
 
-  _led.Start();
-  _taken.Start(_led);
+  //_led.Start();
+  //_taken.Start(_led);
+  
+  Serial.println("*** Starting network");
   _network.Start();
 }
 
 void loop() {
-  _led.Loop();
+  //_led.Loop();
   _network.Loop();
-
-  // avoid having delays in loop, we'll use the strategy from BlinkWithoutDelay
-  // see: File -> Examples -> 02.Digital -> BlinkWithoutDelay for more info
-  currentMillis = millis();
-
-  if (currentMillis - previousMillis >= interval) {
-    // save the last time a message was sent
-    previousMillis = currentMillis;
-
-    _network.SendHelloWorld();
-    count++;
-  }
 }

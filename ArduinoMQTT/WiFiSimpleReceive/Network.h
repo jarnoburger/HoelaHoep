@@ -19,13 +19,15 @@ class Network
     int count;
     int interval;
     unsigned long previousMillis;
+    void OnMessage(int messageSize);
+    void SubScribeToTopic(String topic);
+    void DebugIncomingMessage(int messageSize);
     
   public:
     Network();
     void Start();
     void Loop();
-    void SendHelloWorld();
-    void OnMessage(int messageSize);
+    void SendDebug(String message);   
 };
 
 #endif
