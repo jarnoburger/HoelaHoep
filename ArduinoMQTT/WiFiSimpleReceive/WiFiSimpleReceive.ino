@@ -31,7 +31,7 @@ void setup() {
     ; // wait for serial port to connect. Needed for native USB port only
   }
 
-  _led.Start(6,100);
+  _led.Start();
   _taken.Start(_led);
   _network.Start();
 }

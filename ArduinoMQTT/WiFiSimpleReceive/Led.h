@@ -28,9 +28,11 @@ class Led
     
   public:
     Led();
-    void Start(int pin, int numpixels);
+    void Start();
     void Loop();
-    void Pow();
+    void showStrip();
+    void setAll(byte red, byte green, byte blue);
+    void setPixel(int Pixel, byte red, byte green, byte blue);
     void SetEffect(int effect);
     void SetIntensity(int intensity);
     void SetSpeed(int speed);
@@ -38,6 +40,15 @@ class Led
     void SetPowerB(int power);
     void SetColorA(int red, int green, int blue);
     void SetColorB(int red, int green, int blue);
+    void Pow();
+    void SnowSparkle(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay);
+    void LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay);
+    void RightToLeft(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay);
+    void Sparkle(byte red, byte green, byte blue, int SpeedDelay);
+    void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay);
+    void fadeToBlack(int ledNo, byte fadeValue);
+    void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause);
+
 };
 
 #endif

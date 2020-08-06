@@ -11,7 +11,7 @@
 #define PIN        5 // On Trinket or Gemma, suggest changing this to 1
 
 // How many NeoPixels are attached to the Arduino?
-#define NUM_LEDS 144 // Popular NeoPixel ring size
+#define NUM_LEDS 10// Popular NeoPixel ring size
 
 // When setting up the NeoPixel library, we tell it how many pixels,
 // and which pin to use to send signals. Note that for older NeoPixel
@@ -48,12 +48,12 @@ int m;
   //delay(10);
   //} 
 
-  int speedDelay = 1;
+  int speedDelay = 400;
   int returnDelay = 50;
   int red = 255;
   int green = 255;
   int blue = 255;
-  int eyeSize = 3;
+  int eyeSize = 1;
   LeftToRight(red, green, blue, eyeSize, speedDelay, returnDelay);
   RightToLeft(red, green, blue, eyeSize, speedDelay, returnDelay);
 
