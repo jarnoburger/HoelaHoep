@@ -21,11 +21,6 @@ char         ssid[]      = SECRET_SSID;
 char         pass[]      = SECRET_PASS;    
 const char   broker[]    = SECRET_IP;
 int          port        = SECRET_PORT;
-const String topicStatus = "STATUS"; // published om te zien op de phone >> mqttClient.beginMessage() en mqttClient.endMessage
-const String topiccolorA = "COLORA"; // subscribed om te ontvangen op de arduino
-const String topiccolorB = "COLORB"; // subscribed om te ontvangen op de arduino
-const String topicSpeed  = "SPEED" ; // subscribed om te ontvangen op de arduino
-const String topicEffect = "EFFECT" ; // subscribed om te ontvangen op de arduino
 
 //const char topic[]     = SECRET_TOPIC;
 //String     topicRemote = SECRET_TOPICONMOBILE; 
@@ -38,7 +33,9 @@ Network::Network(){
   interval    = SECRET_INTERVAL;;
 }
 
-void Network::Start(){
+void Network::Start(Taken taken){
+  _taken = taken;
+
   // attempt to connect to Wifi network:
   Serial.print("Attempting to connect to WPA SSID: ");
   Serial.println(ssid);
@@ -151,8 +148,7 @@ void Network::OnMessage(int messageSize){
   }
   Serial.print("Created : ");
   Serial.println(bericht);
-
-  Serial.println();
+  _taken.Parse(topic,bericht);
 }
 
 //void Network::SendHelloWorld(){

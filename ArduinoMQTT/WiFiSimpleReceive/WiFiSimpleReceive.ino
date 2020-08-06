@@ -33,10 +33,10 @@ void setup() {
   Serial.println("*** Goededag meneertje !");
 
   //_led.Start();
-  //_taken.Start(_led);
   
   Serial.println("*** Starting network");
-  _network.Start();
+  _taken.Start(_led);
+  _network.Start(_taken);
 }
 
 void loop() {

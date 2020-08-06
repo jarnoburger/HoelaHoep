@@ -1,6 +1,6 @@
 #ifndef Led_h
 #define Led_h
-#include "Arduino.h"
+#include <Arduino.h>
 
 class Led
 {
@@ -23,24 +23,25 @@ class Led
     int  _colorBGreen;//    0 to  255 , color B green
     int  _colorBBlue; //    0 to  255 , color B blue
     
-    void DoFull();
-    void DoFade();
+
     
+    void showStrip();
+    void setAll(byte red, byte green, byte blue);
+    void setPixel(int Pixel, byte red, byte green, byte blue);
+
   public:
     Led();
     void Start();
     void Loop();
-    void showStrip();
-    void setAll(byte red, byte green, byte blue);
-    void setPixel(int Pixel, byte red, byte green, byte blue);
-    void SetEffect(int effect);
-    void SetIntensity(int intensity);
-    void SetSpeed(int speed);
-    void SetPowerA(int power);
-    void SetPowerB(int power);
-    void SetColorA(int red, int green, int blue);
-    void SetColorB(int red, int green, int blue);
     void Pow();
+
+    void SetColorA(byte red, byte green, byte blue);
+    void SetColorB(byte red, byte green, byte blue);
+    void SetEffect(int effect);
+    void SetSpeed(int speed);
+
+    void DoFull();
+    void DoFade();
     void SnowSparkle(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay);
     void LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay);
     void RightToLeft(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay);
@@ -48,7 +49,6 @@ class Led
     void meteorRain(byte red, byte green, byte blue, byte meteorSize, byte meteorTrailDecay, boolean meteorRandomDecay, int SpeedDelay);
     void fadeToBlack(int ledNo, byte fadeValue);
     void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause);
-
 };
 
 #endif

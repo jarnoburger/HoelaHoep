@@ -73,9 +73,57 @@ void Led::Loop()
   }
 }
 
-void Led::SetEffect(int effect)
+void Led::Pow()
 {
-  _effect = effect;
+  // effects
+  // 1 : alles aan
+  // 2 : fade tussen 2 kleuren (daardoor ook strobe)
+  // 3 : roteer een streep met kleur A , de anderen zijn kleur B
+  // 4 : wave een streep met kleur A , de anderen zijn kleur B
+  // 5 : random met kleur A over kleur B
+  // 6 : color wipe
+
+  byte red         = 255;
+  byte green       =   0;
+  byte blue        =   0;
+  int SparkleDelay = 100;
+  int SpeedDelay   = 100;
+  int ReturnDelay  = 100;
+  int EyeSize      =   3;
+  byte meteorSize  =   5;
+  byte meteorTrailDecay = 10;
+  bool meteorRandomDecay = true;
+  int StrobeCount = 10;
+  int FlashDelay = 50;
+  int EndPause = 100;
+
+  if (_effect == 0){
+    //DoFull();
+  }
+  else if (_effect == 1){
+    //DoFade();
+  }
+  else if (_effect == 2){
+    SnowSparkle(red, green, blue, SparkleDelay, SpeedDelay);
+  }
+  else if (_effect == 3){
+    //LeftToRight(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  }
+  else if (_effect == 4){
+    //RightToLeft(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
+  }
+  else if (_effect == 5){
+    //Sparkle(red, green, blue, SpeedDelay);
+  }
+  else if (_effect == 6){
+    //meteorRain(red, green, blue, meteorSize, meteorTrailDecay,  meteorRandomDecay, SpeedDelay);
+  }
+  else if (_effect == 7){
+    //Strobe(red, green, blue, StrobeCount, FlashDelay, EndPause);
+  }
+  else if (_effect == 8){
+    
+  }
 }
 
 void Led::showStrip() {
@@ -107,6 +155,30 @@ void Led::setAll(byte red, byte green, byte blue) {
     setPixel(i, red, green, blue);
   }
   showStrip();
+}
+
+void Led::SetColorA(byte red, byte green, byte blue){
+
+}
+
+void Led::SetColorB(byte red, byte green, byte blue){
+
+}
+
+void Led::SetEffect(int effect){
+  _effect = effect;
+}
+
+void Led::SetSpeed(int speed){
+
+}
+
+void Led::DoFull(){
+
+}
+
+void Led::DoFade(){
+
 }
 
 void Led::LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay) {
@@ -204,59 +276,6 @@ void Led::Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDela
     delay(FlashDelay);
   }
   }
-
-void Led::Pow()
-{
-  // effects
-  // 1 : alles aan
-  // 2 : fade tussen 2 kleuren (daardoor ook strobe)
-  // 3 : roteer een streep met kleur A , de anderen zijn kleur B
-  // 4 : wave een streep met kleur A , de anderen zijn kleur B
-  // 5 : random met kleur A over kleur B
-  // 6 : color wipe
-
-  byte red         = 255;
-  byte green       =   0;
-  byte blue        =   0;
-  int SparkleDelay = 100;
-  int SpeedDelay   = 100;
-  int ReturnDelay  = 100;
-  int EyeSize      =   3;
-  byte meteorSize  =   5;
-  byte meteorTrailDecay = 10;
-  bool meteorRandomDecay = true;
-  int StrobeCount = 10;
-  int FlashDelay = 50;
-  int EndPause = 100;
-
-  if (_effect == 0){
-    //DoFull();
-  }
-  else if (_effect == 1){
-    //DoFade();
-  }
-  else if (_effect == 2){
-    SnowSparkle(red, green, blue, SparkleDelay, SpeedDelay);
-  }
-  else if (_effect == 3){
-    //LeftToRight(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
-  }
-  else if (_effect == 4){
-    //RightToLeft(red, green, blue, EyeSize, SpeedDelay, ReturnDelay);
-  }
-  else if (_effect == 5){
-    //Sparkle(red, green, blue, SpeedDelay);
-  }
-  else if (_effect == 6){
-    //meteorRain(red, green, blue, meteorSize, meteorTrailDecay,  meteorRandomDecay, SpeedDelay);
-  }
-  else if (_effect == 7){
-    //Strobe(red, green, blue, StrobeCount, FlashDelay, EndPause);
-  }
-  else if (_effect == 8){
-    
-  }
-}
 
 void Led::SnowSparkle(byte red, byte green, byte blue, int SparkleDelay, int SpeedDelay) {  
   setAll(red,green,blue);

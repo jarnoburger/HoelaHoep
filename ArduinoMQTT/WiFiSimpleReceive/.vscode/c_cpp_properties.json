@@ -3,6 +3,7 @@
         {
             "name": "Win32",
             "includePath": [
+                "H:\\OneDrive\\Documents\\Arduino\\libraries\\arduino_587665\\src",
                 "${workspaceRoot}",
                 "C:\\\\Program Files (x86)\\\\Arduino\\\\hardware\\\\arduino\\\\avr\\\\**",
                 "C:\\\\Program Files (x86)\\\\Arduino\\\\tools\\\\**",
@@ -24,7 +25,9 @@
             "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Tools/MSVC/14.26.28801/bin/Hostx64/x64/cl.exe",
             "cStandard": "c11",
             "cppStandard": "c++17",
-            "defines": ["USBCON"]
+            "defines": [
+                "USBCON"
+            ]
         }
     ],
     "version": 4
