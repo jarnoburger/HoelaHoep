@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include "Taken.h"
 #include "Led.h"
-#include <ArduinoJson.h>
 #include "Network.h"
 
 // effects
@@ -12,32 +11,32 @@
 // 5 : random met kleur A over kleur B
 // 6 : color wipe
 
-StaticJsonDocument<200> doc; // buffer om de JSON tree in te bewaren
-char json[] = "{\"sensor\":\"gps\",\"time\":1351824120,\"data\":[48.756080,2.302038]}";  // example string
+taken::taken()
+= default;
 
-Taken::Taken(){
-
-}
-
-void Taken::Start(Led led){
+void taken::start(led led)
+{
   _led = led;
 }
 
-void Taken::Parse(String topic, char message[]){
-  if      (topic.equals(topiccolorA)){
-    SetColorA(message);
+void taken::parse(String topic, char message[]){
+  if      (topic.equals(TOPIC_COLOR_A)){
+    set_color_a(message);
   }
-  else if (topic.equals(topiccolorB)){
-    SetColorB(message);
+  else if (topic.equals(TOPIC_COLOR_B)){
+    set_color_b(message);
   }
-  else if (topic.equals(topicEffect)){
-    SetEffect(message);
+  else if (topic.equals(TOPIC_EFFECT)){
+    set_effect(message);
   }
-  else if (topic.equals(topicSpeed)) {
-    SetSpeed (message);
+  else if (topic.equals(TOPIC_SPEED)) {
+    set_speed (message);
+  }
+  else if (topic.equals(TOPIC_STRENGTH)) {
+    set_strength (message);
   }
   else{
-    Serial.print("No handler for topic ");
+    Serial.print("No taak for topic ");
     Serial.println(topic);
   }
  
@@ -45,95 +44,104 @@ void Taken::Parse(String topic, char message[]){
 }
 
 // tussen 0 en 1000 , de lichtkracht van kleur A
-void Taken::SetColorA(char bericht[]){
-  byte red = 0;
-  byte green = 0;
-  byte blue = 0;
-  byte power = 0;
+void taken::set_color_a(char bericht[]){
+  Serial.println("Parsing info for color A ");
+  Serial.println(bericht);
 
-  Serial.print("Setting power A ");
-  Serial.println(power);
-  power = constrain(power, 0, 1000);
-    Serial.print("Setting color A ");
-  Serial.print(red);
-  Serial.print(" ");
-  Serial.print(green);
-  Serial.print(" ");
+  byte red   = hex_color_to_int(bericht[1], bericht[2]);
+  byte green = hex_color_to_int(bericht[3], bericht[4]);
+  byte blue  = hex_color_to_int(bericht[5], bericht[6]);
+  
+  Serial.println(red);
+  Serial.println(green);
   Serial.println(blue);
-  red   = constrain(red, 0, 255);
-  green = constrain(green, 0, 255);
-  blue  = constrain(blue, 0, 255);
-  _led.SetColorA(red,green,blue);
 
-  //_led.SetPowerA(power);
+  _led.set_color_a(red,green,blue);
 }
 
 // tussen 0 en 1000 , de lichtkracht van kleur B
-void Taken::SetColorB(char bericht[]){
-  byte red = 0;
-  byte green = 0;
-  byte blue = 0;
-  byte power = 0;
+void taken::set_color_b(char bericht[]){
+  Serial.println("Parsing info for color B ");
+  Serial.println(bericht);
 
-  Serial.print("Setting color B ");
-  Serial.print(red);
-  Serial.print(" ");
-  Serial.print(green);
-  Serial.print(" ");
+  byte red   = hex_color_to_int(bericht[1], bericht[2]);
+  byte green = hex_color_to_int(bericht[3], bericht[4]);
+  byte blue  = hex_color_to_int(bericht[5], bericht[6]);
+  
+  Serial.println(red);
+  Serial.println(green);
   Serial.println(blue);
-  red   = constrain(red, 0, 255);
-  green = constrain(green, 0, 255);
-  blue  = constrain(blue, 0, 255);
-  _led.SetColorB(red,green,blue);
-  Serial.print("Setting power B ");
-  Serial.println(power);
-  power = constrain(power, 0, 1000);
-  //_led.SetPowerB(power);
+
+  _led.set_color_b(red,green,blue);
 }
 
 // tussen 0 en het aantal effecten minus 1
-void Taken::SetEffect(char bericht[]){
-  int effect = 0;
+void taken::set_effect(char bericht[]){
+  int effect = atoi(bericht);
 
   Serial.print("Setting effect ");
   Serial.println(effect);
-  effect = constrain(effect, 0, 0);
-  //_led.SetEffect(effect);
+  _led.set_effect(effect);
 }
 
 // tussen 0 en het aantal effecten minus 1
-void Taken::SetSpeed(char bericht[]){
-  int effect = 0;
+void taken::set_speed(char bericht[]){
+  float speed = atoi(bericht);
 
-  Serial.print("Setting effect ");
-  Serial.println(effect);
-  effect = constrain(effect, 0, 0);
-  //_led.SetEffect(effect);
+  speed = constrain(speed, 0, 100)/100;
+
+  Serial.print("Setting speed ");
+  Serial.println(speed);
+  _led.set_speed(speed);
 }
 
-void Taken::Test(){
+void taken::set_strength(char bericht[])
+{
+  int strength = atoi(bericht);
+  Serial.print("Setting strength");
+  Serial.println(strength);
+  _led.set_strength(strength);
+}
+
+
+void taken::show_error(){
+
+}
+
+byte taken::hex_color_to_int(char upper, char lower)
+{
+  byte uVal = (byte)upper;
+  byte lVal = (byte)lower;
+  uVal = uVal > 64 ? uVal - 55 : uVal - 48;
+  uVal = uVal << 4;
+  lVal = lVal > 64 ? lVal - 55 : lVal - 48;
+  //  Serial.println(uVal+lVal);
+  return uVal + lVal;
+}
+
+void taken::test(){
   // Deserialize the JSON document
-  DeserializationError error = deserializeJson(doc, json);
+  //DeserializationError error = deserializeJson(doc, json);
 
   // Test if parsing succeeds.
-  if (error) {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.c_str());
-    return;
-  }
+  //if (error) {
+  //  Serial.print(F("deserializeJson() failed: "));
+  //  Serial.println(error.c_str());
+  //  return;
+  //}
 
   // Fetch values.
   //
   // Most of the time, you can rely on the implicit casts.
   // In other case, you can do doc["time"].as<long>();
-  const char* sensor = doc["sensor"];
-  long time = doc["time"];
-  double latitude = doc["data"][0];
-  double longitude = doc["data"][1];
+  //const char* sensor = doc["sensor"];
+  //long time = doc["time"];
+  //double latitude = doc["data"][0];
+  //double longitude = doc["data"][1];
 
   // Print values.
-  Serial.println(sensor);
-  Serial.println(time);
-  Serial.println(latitude, 6);
-  Serial.println(longitude, 6);
+  //Serial.println(sensor);
+  //Serial.println(time);
+  //Serial.println(latitude, 6);
+  //Serial.println(longitude, 6);
 }

@@ -15,6 +15,9 @@
         "string": "cpp",
         "algorithm": "cpp",
         "xhash": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "xlocale": "cpp",
+        "queue": "cpp",
+        "cmath": "cpp"
     }
 }

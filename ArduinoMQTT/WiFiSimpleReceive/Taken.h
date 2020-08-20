@@ -1,28 +1,27 @@
-#ifndef Taken_h
-#define Taken_h
+#ifndef TAKEN_H
+#define TAKEN_H
 #include <Arduino.h>
 #include "Led.h"
 
-#define EffectSparcle "Sparcle"
-#define EffectEye     "Eye"
-#define EffectMeteor  "Meteor"
-#define FullColor     "FullColor"
-
-class Taken
+class taken
 {
   private:
-    Led _led;
+    led _led;
 
-    void SetColorA(char bericht[]);
-    void SetColorB(char bericht[]);
-    void SetEffect(char bericht[]);
-    void SetSpeed (char bericht[]);
-    void Test();
-    
+    void set_color_a(char bericht[]);
+    void set_color_b(char bericht[]);
+    void set_effect(char bericht[]);
+    void set_speed (char bericht[]);
+    void set_strength(char bericht[]);
+
+    void test();
+    byte hex_color_to_int(char upper, char lower);
+
   public:
-    Taken();
-    void Start(Led led);
-    void Parse(String topic, char message[]);
+    taken();
+    void start(led led);
+    void parse(String topic, char message[]);
+    void show_error();
 };
 
 #endif
