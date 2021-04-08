@@ -1,0 +1,12 @@
+{
+  "additionalFiles": "..,..,..,..,..,..,..",
+  "builtInLibrariesFolders": "C:\\Program Files (x86)\\Arduino\\libraries",
+  "builtInToolsFolders": "C:\\Program Files (x86)\\Arduino\\tools-builder,C:\\Program Files (x86)\\Arduino\\hardware\\tools\\avr,C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages",
+  "compiler.optimization_flags": "-Os",
+  "customBuildProperties": "build.path=k:\\AERenderFolder\\2020-07-02 Water hoela hoop\\ArduinoMQTT\\ArduinoOutput,build.warn_data_percentage=75,runtime.tools.arduinoOTA.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arduinoOTA\\1.2.1,runtime.tools.arduinoOTA-1.2.1.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arduinoOTA\\1.2.1,runtime.tools.arm-none-eabi-gcc.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4,runtime.tools.arm-none-eabi-gcc-7-2017q4.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\arm-none-eabi-gcc\\7-2017q4,runtime.tools.bossac.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\bossac\\1.7.0-arduino3,runtime.tools.bossac-1.7.0-arduino3.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\bossac\\1.7.0-arduino3,runtime.tools.CMSIS.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS\\4.5.0,runtime.tools.CMSIS-4.5.0.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS\\4.5.0,runtime.tools.CMSIS-Atmel.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS-Atmel\\1.2.0,runtime.tools.CMSIS-Atmel-1.2.0.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\CMSIS-Atmel\\1.2.0,runtime.tools.openocd.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\openocd\\0.10.0-arduino7,runtime.tools.openocd-0.10.0-arduino7.path=C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\tools\\openocd\\0.10.0-arduino7",
+  "fqbn": "arduino:samd:nano_33_iot",
+  "hardwareFolders": "C:\\Program Files (x86)\\Arduino\\hardware,C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages",
+  "otherLibrariesFolders": "H:\\OneDrive\\Documents\\Arduino\\libraries",
+  "runtime.ide.version": "10814",
+  "sketchLocation": "k:\\AERenderFolder\\2020-07-02 Water hoela hoop\\ArduinoMQTT\\WiFiSimpleReceive\\WiFiSimpleReceive.ino"
+}

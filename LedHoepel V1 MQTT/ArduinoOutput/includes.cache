@@ -1,0 +1,122 @@
+[
+  {
+    "Sourcefile": null,
+    "Include": "",
+    "Includepath": "C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.7\\cores\\arduino"
+  },
+  {
+    "Sourcefile": null,
+    "Include": "",
+    "Includepath": "C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.7\\variants\\nano_33_iot"
+  },
+  {
+    "Sourcefile": "k:\\AERenderFolder\\2020-07-02 Water hoela hoop\\ArduinoMQTT\\ArduinoOutput\\sketch\\WiFiSimpleReceive.ino.cpp",
+    "Include": "ArduinoMqttClient.h",
+    "Includepath": "H:\\OneDrive\\Documents\\Arduino\\libraries\\ArduinoMqttClient\\src"
+  },
+  {
+    "Sourcefile": "k:\\AERenderFolder\\2020-07-02 Water hoela hoop\\ArduinoMQTT\\ArduinoOutput\\sketch\\WiFiSimpleReceive.ino.cpp",
+    "Include": "WiFiNINA.h",
+    "Includepath": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src"
+  },
+  {
+    "Sourcefile": "k:\\AERenderFolder\\2020-07-02 Water hoela hoop\\ArduinoMQTT\\ArduinoOutput\\sketch\\WiFiSimpleReceive.ino.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "k:\\AERenderFolder\\2020-07-02 Water hoela hoop\\ArduinoMQTT\\ArduinoOutput\\sketch\\Led.cpp",
+    "Include": "Adafruit_NeoPixel.h",
+    "Includepath": "H:\\OneDrive\\Documents\\Arduino\\libraries\\Adafruit_NeoPixel"
+  },
+  {
+    "Sourcefile": "k:\\AERenderFolder\\2020-07-02 Water hoela hoop\\ArduinoMQTT\\ArduinoOutput\\sketch\\Led.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "k:\\AERenderFolder\\2020-07-02 Water hoela hoop\\ArduinoMQTT\\ArduinoOutput\\sketch\\Network.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "k:\\AERenderFolder\\2020-07-02 Water hoela hoop\\ArduinoMQTT\\ArduinoOutput\\sketch\\Taken.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\ArduinoMqttClient\\src\\MqttClient.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\WiFi.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\WiFiClient.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\WiFiSSLClient.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\WiFiServer.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\WiFiStorage.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\WiFiUdp.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\utility\\WiFiSocketBuffer.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\utility\\server_drv.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\utility\\spi_drv.cpp",
+    "Include": "SPI.h",
+    "Includepath": "C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.7\\libraries\\SPI"
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\utility\\spi_drv.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\WiFiNINA\\src\\utility\\wifi_drv.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\Adafruit_NeoPixel\\Adafruit_NeoPixel.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "H:\\OneDrive\\Documents\\Arduino\\libraries\\Adafruit_NeoPixel\\esp8266.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\jarno\\AppData\\Local\\Arduino15\\packages\\arduino\\hardware\\samd\\1.8.7\\libraries\\SPI\\SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  }
+]
