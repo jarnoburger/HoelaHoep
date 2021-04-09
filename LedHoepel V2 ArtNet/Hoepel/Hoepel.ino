@@ -4,10 +4,10 @@
 //  https://github.com/natcl/Artnet
 // 
 // http://forum.pjrc.com/threads/24688-Artnet-to-OctoWS2811?p=55589&viewfull=1#post55589
+#include <NativeEthernet.h>
+#include <NativeEthernetUdp.h>
+#include "JArtnet.h"
 
-#include <Artnet.h>
-#include <Ethernet.h>
-#include <EthernetUdp.h>
 #include <SPI.h>
 #include <OctoWS2811.h>
 
@@ -15,15 +15,15 @@
 // https://forum.pjrc.com/threads/45760-E1-31-sACN-Ethernet-DMX-Performance-help-6-Universe-Limit-improvements
 
 // OctoWS2811 settings
-const int ledsPerStrip = 492; // change for your setup
-const byte numStrips= 1; // change for your setup
+const int ledsPerStrip = 10; // change for your setup
+const byte numStrips= 4; // change for your setup
 DMAMEM int displayMemory[ledsPerStrip*6];
 int drawingMemory[ledsPerStrip*6];
 const int config = WS2811_GRB | WS2811_800kHz;
 OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
 
 // Artnet settings
-Artnet artnet;
+JArtnet artnet;
 const int startUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as zero.
 const int numberOfChannels = ledsPerStrip * numStrips * 3; // Total number of channels you want to receive (1 led = 3 channels)
 byte channelBuffer[numberOfChannels]; // Combined universes into a single array
@@ -34,28 +34,53 @@ bool universesReceived[maxUniverses];
 bool sendFrame = 1;
 
 // Change ip and mac address for your setup
-byte ip[] = {192, 168, 2, 2};
+byte ip[] = {192, 168, 2, 200};
+byte broadcast[] = {192, 255, 255, 255};
 byte mac[] = {0x04, 0xE9, 0xE5, 0x00, 0x69, 0xEC};
 
 void setup()
 {
   Serial.begin(115200);
+  Serial.println("Welcome !");
   artnet.begin(mac, ip);
+  artnet.setBroadcast(broadcast);
   leds.begin();
-  initTest();
+  //initTest();
 
   // this will be called for each packet received
-  artnet.setArtDmxCallback(onDmxFrame);
+  //artnet.setArtDmxCallback(onDmxFrame);
 }
 
 void loop()
 {
   // we call the read function inside the loop
-  artnet.read();
+  //artnet.read();
+  
+  if (artnet.read() == ART_DMX)
+  {
+    // print out our data
+    Serial.print("universe number = ");
+    Serial.print(artnet.getUniverse());
+    Serial.print("\tdata length = ");
+    Serial.print(artnet.getLength());
+    Serial.print("\tsequence n0. = ");
+    Serial.println(artnet.getSequence());
+    Serial.print("DMX data: ");
+    for (int i = 0 ; i < artnet.getLength() ; i++)
+    {
+      Serial.print(artnet.getDmxFrame()[i]);
+      Serial.print("  ");
+    }
+    Serial.println();
+    Serial.println();
+  }
 }
 
 void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data)
 {
+
+  return;
+  Serial.println(" RX");
   sendFrame = 1;
 
   // Store which universe has got in
