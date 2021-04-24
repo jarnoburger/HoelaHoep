@@ -1,3 +1,5 @@
+#include <Arduino.h>
+
 // Receive multiple universes via Artnet and control a strip of ws2811 leds via OctoWS2811
 //
 // This example may be copied under the terms of the MIT license, see the LICENSE file for details
@@ -23,7 +25,7 @@ const int ledsPerStrip = 13; // change for your setup
 const byte numStrips= 4; // change for your setup
 DMAMEM int displayMemory[ledsPerStrip*8];
 int drawingMemory[ledsPerStrip*8];
-const int config = WS2812_RGBW | WS2811_800kHz;
+const int config = WS2811_BRGW | WS2811_800kHz;
 OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
 
 // Artnet settings
@@ -46,6 +48,11 @@ bool arting = true;
 
 int point = 0;
 int range = 13;
+
+void SetStatusToConnecting();
+void SetStatusToConnected();
+void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data);
+void DoCircle();
 
 void setup()
 {
