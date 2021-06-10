@@ -38,8 +38,8 @@ bool universesReceived[maxUniverses];
 bool sendFrame = 1;
 
 // Change ip and mac address for your setup
-byte ip[] = {192, 168, 2, 200};
-byte broadcast[] = {192, 255, 255, 255};
+byte ip[] = {10, 0, 0, 201}; // licht zit in 10.0.0.x
+byte broadcast[] = {10, 0, 0, 255};
 byte mac[] = {0x04, 0xE9, 0xE5, 0x00, 0x69, 0xEC};
 
 bool arting = true;

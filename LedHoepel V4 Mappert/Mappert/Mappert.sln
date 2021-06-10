@@ -3,7 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.31112.23
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Mappert", "Mappert.csproj", "{DC71207A-A454-40F7-925F-85C410579E4F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mappert", "Mappert.csproj", "{DC71207A-A454-40F7-925F-85C410579E4F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReadResolume", "..\..\LedHoepel V6 ReadResolume\ReadResolume\ReadResolume.csproj", "{A6DE8B82-E286-4873-A74C-E7640433B406}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ResolumeJSDK", "..\..\ResolumeJSDK\ResolumeJSDK\ResolumeJSDK.csproj", "{2A09D05C-4135-4763-A8A4-FC919B60CAE1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{DC71207A-A454-40F7-925F-85C410579E4F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC71207A-A454-40F7-925F-85C410579E4F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC71207A-A454-40F7-925F-85C410579E4F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A6DE8B82-E286-4873-A74C-E7640433B406}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A6DE8B82-E286-4873-A74C-E7640433B406}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A6DE8B82-E286-4873-A74C-E7640433B406}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A6DE8B82-E286-4873-A74C-E7640433B406}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A09D05C-4135-4763-A8A4-FC919B60CAE1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A09D05C-4135-4763-A8A4-FC919B60CAE1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A09D05C-4135-4763-A8A4-FC919B60CAE1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A09D05C-4135-4763-A8A4-FC919B60CAE1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

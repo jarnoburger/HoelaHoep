@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Mappert
@@ -43,7 +38,7 @@ namespace Mappert
             for (int i = 0; i < 40; i++)
             {
                 var center = new Point(_random.Next(this.Width), _random.Next(this.Height));
-                var wolkje = new Wolkje(center,8);
+                var wolkje = new Wolkje(center,3);
                 _wolkjes.Add(wolkje);
             }
         }
