@@ -1,9 +1,11 @@
 #include <Arduino.h>
 #include <NativeEthernet.h>
 #include <NativeEthernetUdp.h>
-#include "JArtnet.h"
+#include <SimpleTimer.h>
 #include <SPI.h>
 #include <OctoWS2811.h>
+#include "Extras.h"
+#include "JArtnet.h"
 
 /*
 Receive multiple universes via Artnet and control a strip of ws2811 leds via OctoWS2811
@@ -16,9 +18,14 @@ installeer uit de libraries folder op disk de octows2811 library en deinstalleer
 */
 
 // Network settings
-byte ip[] = {192, 168, 2, 200};
-byte broadcast[] = {192, 255, 255, 255};
-byte mac[] = {0x04, 0xE9, 0xE5, 0x00, 0x69, 0xEC};
+byte mac[]       = {  0x04, 0xE9, 0xE5, 0x00, 0x69, 0xEC};
+byte ip[]        = { 192, 168,   2, 241 };
+byte dns[]       = { 192, 168,   2,   1 };
+byte gateway[]   = { 192, 168,   2,   1 };
+byte subnet[]    = { 255, 255, 255,   0 };
+
+byte broadcast[] = { 192, 168,   2, 255 };
+SimpleTimer timerNetwork;
 
 // Led Settings
 #define ledsPerStrip 13 
@@ -39,60 +46,85 @@ byte channelBuffer[numberOfChannels]; // Combined universes into a single array
 // Check if we got all universes
 const int maxUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
 bool universesReceived[maxUniverses];
-bool sendFrame = 1;
+bool showFrame = 1;
 
-// prut
-bool arting = true;
-int point = 0;
-int range = 13;
+// debug
+bool demoMode = true;
+bool debugArtnet = false;
+bool debugUdp = false;
 
+// Demo mode variables
+uint8_t thisdelay = 40;                                       // A delay value for the sequence(s)
+uint8_t thishue = 0;                                          // Starting hue value.
+int8_t thisrot = 1;                                           // Hue rotation speed. Includes direction.
+uint8_t deltahue = 1;                                         // Hue change between pixels.
+bool thisdir = 0;                                             // I use a direction variable instead of signed math so I can use it in multiple routines.
 
 // declare functies
-void SetStatusToConnecting();
-void SetStatusToConnected();
 void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data);
+void WaitForDemoMode();
+void DoDemoMode();
+boolean ConnectNetwork();
+void DoNetworkCheck();
+void rainbow_march();
 
 void setup()
 {
+  //Udp.begin(6454);  // alleen aanzetten als artnet op een andere poort moet
+
   // led blinker
   pinMode(LED_BUILTIN, OUTPUT);
-  
   digitalWrite(LED_BUILTIN, HIGH);
+
+  // start de check of we in demo mode verder gaan
+  WaitForDemoMode();
+
+  // do leds
   leds.begin();
   
+  // do debug
   Serial.begin(115200);
-  Serial.println("Welcome, i am connecting");
-  SetStatusToConnecting();
+  Serial.println("Welcome");
+  Serial.println();
+  Serial.print("Demo mode is : ");
+  Serial.println(demoMode);
+  Serial.print("Debug ArtNet is : ");
+  Serial.println(debugArtnet);
+  Serial.print("Debug Udp is : ");
+  Serial.println(debugUdp);
 
-  artnet.begin(mac, ip);
+  // do network
+  ConnectNetwork();
+  timerNetwork.setInterval(3000, DoNetworkCheck);
+
+  // do artnet
+  artnet.begin();
   artnet.setBroadcast(broadcast);
-  SetStatusToConnected();
-  Serial.println("Connected");
-  
+
   // this will be called for each packet received
-  if (arting) artnet.setArtDmxCallback(onDmxFrame);
+  artnet.setArtDmxCallback(onDmxFrame);
 
   digitalWrite(LED_BUILTIN, LOW);
 }
 
-void SetStatusToConnecting(){
-  for (int i = 0 ; i < ledsPerStrip; i++)
-  {
-    leds.setPixel(i, 255, 255, 255, 255);
-  }
-    
-  leds.show();
-  delay(1000);
-}
+// wait 3 seconds to see if demo mode gets activated
+void WaitForDemoMode(){
+  pinMode(4, INPUT);  // zet de pin klaar om te luisteren
+  
+  int d = 100; // time between on/off or off/on
+  
+  for (int i = 0; i < 3000; i=i+d){
 
-void SetStatusToConnected(){
-    for (int i = 0 ; i < ledsPerStrip; i++)
-  {
-    leds.setPixel(i, 0, 0, 255, 0);
+    // do blinkie op de achterkant
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(d/2);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(d/2);
+
+    if (digitalRead(4) == true){
+      demoMode = true;
+    }
   }
-    
-  leds.show();
-  delay(1000);
 }
 
 void loop()
@@ -107,7 +139,7 @@ void loop()
   { 
     // set the blink led to high , because there was a packet
     digitalWrite(LED_BUILTIN, HIGH);
-    
+
     // we call the read function inside the loop
     artnet.read();
   }
@@ -116,10 +148,58 @@ void loop()
   digitalWrite(LED_BUILTIN, LOW);
 }
 
-void DoDemoMode()
-{
+void DoDemoMode(){
+  /*
+  for (int i = 0 ; i < numberOfPixels ; i++) {
+    leds[i] = CRGBW(255, 0, 0, 0);
+  }
+  FastLED.show();
+  delay(500);
+  for (int i = 0 ; i < numberOfPixels ; i++) {
+    leds[i] = CRGBW(0, 255, 0, 0);
+  }
+  FastLED.show();
+  delay(500);
+  */
 
-}
+    // A time (rather than loop) based demo sequencer. This gives us full control over the length of each sequence.
+  
+  uint8_t secondHand = (millis() / 1000) % 60;                // Change '60' to a different value to change length of the loop.
+  static uint8_t lastSecond = 99;                             // Static variable, means it's only defined once. This is our 'debounce' variable.
+
+  if (lastSecond != secondHand) {                             // Debounce to make sure we're not repeating an assignment.
+    lastSecond = secondHand;
+    switch(secondHand) {
+      case  0: thisrot=1; deltahue=5; break;
+      case  5: thisdir=-1; deltahue=10; break;
+      case 10: thisrot=5; break;
+      case 15: thisrot=5; thisdir=-1; deltahue=20; break;
+      case 20: deltahue=30; break;
+      case 25: deltahue=2; thisrot=5; break;
+      case 30: break;
+    }
+  }
+
+  //EVERY_N_MILLISECONDS(thisdelay) {                           // FastLED based non-blocking delay to update/display the sequence.
+    rainbow_march();
+  //}
+
+  //FastLED.show();
+} // part of DoDemoMode()
+
+void rainbow_march() {                                        // The fill_rainbow call doesn't support brightness levels. You would need to change the max_bright value.
+  
+  if (thisdir == 0) thishue += thisrot; else thishue-= thisrot;  // I could use signed math, but 'thisdir' works with other routines.
+
+  //CHSV hsv;
+  //hsv.hue = thishue;
+  //hsv.val = 255;
+  //hsv.sat = 240;
+  //for( int i = 0; i < numberOfPixels; ++i) {
+  //    leds[i] = hsv;
+  //    hsv.hue += deltahue;
+  //}
+} // rainbow_march()
 
 void DebugArtNet(){
     // print out our data
@@ -143,10 +223,9 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
 {
   digitalWrite(LED_BUILTIN, HIGH);
   
-  if (arting == false) { return; }
-  DebugArtNet();
+  if (debugArtnet) DebugArtNet(artnet);
   
-  sendFrame = 1;
+  showFrame = 1;
 
   // Store which universe has got in
   if (universe < maxUniverses)
@@ -158,7 +237,7 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
     {
       
       //Serial.println("Broke");
-      sendFrame = 0;
+      showFrame = 0;
       break;
     }
   }
@@ -183,10 +262,69 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
                   channelBuffer[first + 3]);
   }      
   
-  if (sendFrame)
+  if (showFrame)
   {
     leds.show();
     // Reset universeReceived to 0
     memset(universesReceived, 0, maxUniverses);
   }
+}
+
+// connect to wifi – returns true if successful or false if not
+boolean ConnectNetwork(void)
+{
+  boolean state = true;
+  int i = 0;
+
+  // Wait for connection
+  Serial.print("Waiting for networkcable ");
+  while (Ethernet.linkStatus() != LinkON) {
+    delay(500);
+    Serial.print(".");
+    if (i > 20){
+      state = false;
+      break;
+    }
+    i++;
+  }
+  
+  // handle cable connection status
+  if (state == false)
+  {
+    Serial.println();
+    Serial.println("Network is not connected , reverting to demo mode");
+    demoMode = true;
+    Serial.print("Demo mode is : ");
+    Serial.println(demoMode);
+    return false;
+  }
+  else 
+  {
+    Serial.println("Network cable is connected !");
+  }
+
+  Serial.println("Connecting to network");
+  Ethernet.begin(mac,ip, dns, gateway , subnet);
+
+  if (state){
+    Serial.println("");
+    Serial.print("Connected to ");
+    Serial.println(Ethernet.gatewayIP());
+    Serial.print("IP address: ");
+    Serial.println(Ethernet.localIP());
+  } else {
+    Serial.println("");
+    Serial.println("Connection failed.");
+  }
+
+  return state;
+}
+
+void DoNetworkCheck(){
+  if (Ethernet.linkStatus() == LinkOFF){
+    Serial.println("Ethernet cable is not connected");
+  }
+  else{
+    Serial.println("Ethernet cable is not connected");
+  };
 }

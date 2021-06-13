@@ -81,10 +81,8 @@ bool thisdir = 0;                                             // I use a directi
 // declare functies
 void WaitForDemoMode();
 void InitTest();
-void SetStatusToConnecting();
-void SetStatusToConnected();
 void OnDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data);
-boolean ConnectWifi();
+boolean ConnectNetwork();
 void DoDemoMode();
 void rainbow_march();
 void DoNetworkCheck();
@@ -95,10 +93,16 @@ void setup()
 
   // led blinker
   pinMode(LED_BUILTIN, OUTPUT);
+  digitalWrite(LED_BUILTIN, HIGH);
 
   // start de check of we in demo mode verder gaan
   WaitForDemoMode();
 
+  // do leds
+  FastLED.addLeds<WS2812B, DATA_PIN, RGB>(ledsRGB, getRGBWsize(numberOfPixels));
+  Serial.println("Started FastLed");
+
+  // do debug
   Serial.begin(115200);
   Serial.println("Welcome");
   Serial.println();
@@ -109,15 +113,15 @@ void setup()
   Serial.print("Debug Udp is : ");
   Serial.println(debugUdp);
 
-  SetStatusToConnecting();
-  ConnectWifi();
-  SetStatusToConnected();
+  // do network
+  ConnectNetwork();
   timerNetwork.setInterval(3000, DoNetworkCheck);
 
+  // do artnet
   artnet.begin();
   Serial.println("Started Artnet");
-  FastLED.addLeds<WS2812B, DATA_PIN, RGB>(ledsRGB, getRGBWsize(numberOfPixels));
-  Serial.println("Started FastLed");
+
+
 
   Serial.print("Number of pixels : ");
   Serial.println(numberOfPixels);
@@ -156,7 +160,7 @@ void WaitForDemoMode(){
 }
 
 // connect to wifi – returns true if successful or false if not
-boolean ConnectWifi(void)
+boolean ConnectNetwork(void)
 {
   boolean state = true;
   int i = 0;
@@ -328,26 +332,6 @@ void rainbow_march() {                                        // The fill_rainbo
       hsv.hue += deltahue;
   }
 } // rainbow_march()
-
-void SetStatusToConnecting(){
-  for (int i = 0 ; i < numberOfPixels; i++)
-  {
-    leds[i] = CRGBW(255, 255, 255, 255);
-  }
-    
-  FastLED.show();
-  delay(1000);
-}
-
-void SetStatusToConnected(){
-  for (int i = 0 ; i < numberOfPixels; i++)
-  {
-    leds[i] = CRGBW(0, 255, 0,0);
-  }
-    
-  FastLED.show();
-  delay(1000);
-}
 
 void DoNetworkCheck(){
   int status = WiFi.status();

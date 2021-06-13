@@ -26,18 +26,6 @@ THE SOFTWARE.
 
 //JArtnet::JArtnet() {}
 
-byte sub[] = {255,255,255,0};
-
-void JArtnet::begin(byte mac[], byte ip[])
-{
-  #if !defined(ARDUINO_SAMD_ZERO) && !defined(ESP8266) && !defined(ESP32)
-    Ethernet.setSubnetMask(sub);
-    Ethernet.begin(mac,ip);
-  #endif
-
-  Udp.begin(ART_NET_PORT);
-}
-
 void JArtnet::begin()
 {
   Udp.begin(ART_NET_PORT);

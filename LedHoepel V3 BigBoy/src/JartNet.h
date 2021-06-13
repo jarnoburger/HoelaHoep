@@ -96,7 +96,6 @@ class JArtnet
 {
 public:
 
-  void begin(byte mac[], byte ip[]);
   void begin();
   void setBroadcastAuto(IPAddress ip, IPAddress sn);
   void setBroadcast(byte bc[]);
