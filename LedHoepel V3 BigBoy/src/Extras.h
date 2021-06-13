@@ -7,3 +7,5 @@
 
 void DebugUdp(EthernetUDP udp);
 void DebugArtNet(JArtnet artnet);
+
+byte * Wheel(byte WheelPos);

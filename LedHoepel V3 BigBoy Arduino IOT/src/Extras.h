@@ -5,6 +5,7 @@
 
 #include <FastLED.h>
 #include "FastLED_RGBW.h"
-
 void DebugUdp(WiFiUDP udp);
 void DebugArtNet(ArtnetWifi artnet);
+
+byte * Wheel(byte WheelPos);
