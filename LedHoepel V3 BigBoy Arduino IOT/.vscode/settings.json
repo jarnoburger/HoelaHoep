@@ -1,6 +1,21 @@
 {
     "files.associations": {
         "*.cps": "javascript",
-        "cstddef": "cpp"
+        "cstddef": "cpp",
+        "array": "cpp",
+        "string": "cpp",
+        "string_view": "cpp",
+        "*.tcc": "cpp",
+        "ostream": "cpp",
+        "sstream": "cpp",
+        "utility": "cpp",
+        "cmath": "cpp",
+        "istream": "cpp",
+        "limits": "cpp",
+        "memory": "cpp",
+        "streambuf": "cpp",
+        "tuple": "cpp",
+        "algorithm": "cpp",
+        "stdexcept": "cpp"
     }
 }

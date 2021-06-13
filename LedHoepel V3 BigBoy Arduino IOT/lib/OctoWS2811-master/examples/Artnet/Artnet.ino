@@ -42,10 +42,10 @@ void setup()
   Serial.begin(115200);
   artnet.begin(mac, ip);
   leds.begin();
-  initTest();
+  InitTest();
 
   // this will be called for each packet received
-  artnet.setArtDmxCallback(onDmxFrame);
+  artnet.setArtDmxCallback(OnDmxFrame);
 }
 
 void loop()
@@ -54,7 +54,7 @@ void loop()
   artnet.read();
 }
 
-void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data)
+void OnDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data)
 {
   sendFrame = 1;
 
@@ -94,7 +94,7 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
   }
 }
 
-void initTest()
+void InitTest()
 {
   for (int i = 0 ; i < ledsPerStrip * numStrips ; i++)
     leds.setPixel(i, 127, 0, 0);
