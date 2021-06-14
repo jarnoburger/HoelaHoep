@@ -16,6 +16,10 @@
         "streambuf": "cpp",
         "tuple": "cpp",
         "algorithm": "cpp",
-        "stdexcept": "cpp"
+        "stdexcept": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "vector": "cpp",
+        "initializer_list": "cpp"
     }
 }

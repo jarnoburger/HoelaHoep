@@ -46,7 +46,8 @@ byte channelBuffer[numberOfChannels]; // Combined universes into a single array
 // Check if we got all universes
 const int maxUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
 bool universesReceived[maxUniverses];
-bool showFrame = 1;
+bool bufferFull = 1;
+bool showFrame = 0;
 
 // debug
 bool demoMode = true;
@@ -225,7 +226,7 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
   
   if (debugArtnet) DebugArtNet(artnet);
   
-  showFrame = 1;
+  bufferFull = 1;
 
   // Store which universe has got in
   if (universe < maxUniverses)
@@ -237,7 +238,7 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
     {
       
       //Serial.println("Broke");
-      showFrame = 0;
+      bufferFull = 0;
       break;
     }
   }
@@ -262,8 +263,9 @@ void onDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
                   channelBuffer[first + 3]);
   }      
   
-  if (showFrame)
+  if (bufferFull)
   {
+    showFrame = true;
     leds.show();
     // Reset universeReceived to 0
     memset(universesReceived, 0, maxUniverses);

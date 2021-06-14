@@ -51,11 +51,14 @@ SimpleTimer timerNetwork;
 // LED settings
 const int numberOfPixels = 36; // change for your setup
 #define DATA_PIN 2
+#define FPS 25
 
 // LED MEMORY
 CRGBW leds[numberOfPixels];
 CRGB *ledsRGB = (CRGB *) &leds[0];
 int drawingMemory[numberOfPixels*8];
+SimpleTimer timerShowPixels;
+
 
 // Artnet settings
 const int startUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as zero.
@@ -63,7 +66,8 @@ const int numberOfChannels = numberOfPixels * 4; // Total number of channels you
 const int numberOfUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
 byte channelBuffer[numberOfChannels]; // Combined universes into a single array
 bool universesReceived[numberOfUniverses];
-bool showFrame = 1;
+bool channelBufferIsFull = false;
+bool showLeds = false;
 int previousDataLength = 0;
 
 // debug
@@ -86,6 +90,7 @@ boolean ConnectNetwork();
 void DoDemoMode();
 void rainbow_march();
 void DoNetworkCheck();
+void DoShowPixels();
 
 void setup()
 {
@@ -115,13 +120,11 @@ void setup()
 
   // do network
   ConnectNetwork();
-  timerNetwork.setInterval(3000, DoNetworkCheck);
+  timerNetwork.setInterval(30000, DoNetworkCheck);
 
   // do artnet
   artnet.begin();
   Serial.println("Started Artnet");
-
-
 
   Serial.print("Number of pixels : ");
   Serial.println(numberOfPixels);
@@ -137,6 +140,8 @@ void setup()
 
   artnet.setArtDmxCallback(OnDmxFrame);
   Serial.println("Artnet ready to recieve");
+
+  timerShowPixels.setInterval(1000/50, DoShowPixels);
 }
 
 // wait 3 seconds to see if demo mode gets activated
@@ -211,6 +216,7 @@ void loop()
   artnet.read();
 
   timerNetwork.run();
+  timerShowPixels.run();
   //digitalWrite(LED_BUILTIN, LOW);
 }
 
@@ -223,10 +229,10 @@ void OnDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
   if (debugArtnet) DebugArtNet(artnet);
   
   // we wachten totdat elke universe gevuld is 
-  // als er een universe van de hele mik, nog niet data heeft recieved (universeRecieved[]==0), dan wordt showFrame 0
-  // als elke universe gevuld is , dan blijft showFrame 1 , en roepen we de Led Show functie aan.
+  // als er een universe van de hele mik, nog niet data heeft recieved (universeRecieved[]==0), dan wordt channelBufferIsFull 0
+  // als elke universe gevuld is , dan blijft channelBufferIsFull 1 , en roepen we de Led Show functie aan.
 
-  showFrame = 1;
+  channelBufferIsFull = 1;
 
   // set brightness of the whole strip
   if (universe == 15)
@@ -240,12 +246,12 @@ void OnDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
     universesReceived[universe] = 1;
   }
 
-  // walk by each universe , to see if they are all populated so show a frame , if not , then showFrame = 0, and we will not shows the leds yet.
+  // walk by each universe , to see if they are all populated so show a frame , if not , then channelBufferIsFull = 0, and we will not shows the leds yet.
   for (int i = 0 ; i < numberOfUniverses ; i++)
   {
     if (universesReceived[i] == 0)
     {     
-      showFrame = 0;
+      channelBufferIsFull = 0;
 
       break;
     }
@@ -269,14 +275,9 @@ void OnDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* d
   previousDataLength = length;
 
   // if all the universe were filed , we can show the leds.
-  if (showFrame)
+  if (channelBufferIsFull)
   {
-    lastCompleteFrameTime = millis();
-    frames++;
-    Serial.println(frames);
-
-    FastLED.show();  
-    memset(universesReceived, 0, numberOfUniverses); // Reset universeReceived to 0
+    showLeds = true;
   }
 }
 
@@ -334,6 +335,10 @@ void rainbow_march() {                                        // The fill_rainbo
 } // rainbow_march()
 
 void DoNetworkCheck(){
+  if (demoMode) {
+    Serial.println("Demo mode");
+    return;
+  }
   int status = WiFi.status();
   // attempt to connect to Wifi network:
   if (status == WL_CONNECTED)
@@ -342,14 +347,28 @@ void DoNetworkCheck(){
   }
   else if (status == WL_DISCONNECTED)
   { 
-    Serial.println("Disconnected");
+    Serial.println("Disconnected, retry..");
+    WiFi.end();
+    ConnectNetwork();
+    artnet.begin();
   }
   else if (status == WL_CONNECTION_LOST)
   { 
     Serial.println("Connection lost");
+
   }
   else if (status == WL_CONNECT_FAILED)
   { 
     Serial.println("Connection failed");
   }
+}
+
+void DoShowPixels(){
+  if (showLeds == true){
+    FastLED.show();  
+    memset(universesReceived, 0, numberOfUniverses); // Reset universeReceived to 0
+    FastLED.delay(1000/FPS);
+    digitalWrite(LED_BUILTIN, LOW);
+  }
+
 }
