@@ -1,0 +1,43 @@
+So, whether using ethernet or wifi, or whathaveyou, you will collect the incoming data into a buffer. You then remove the art-net header (you can run some error checks on this header if you wish. Also, in the code below, I run a simple universe number check by printing it to serial monitor.
+
+
+Code:
+void grabInput(){ 
+  //-------------put the incoming data into a buffer----------//
+//here, I am using a buffer called buff to receive via CC3000 UDP packet 
+ sockLen = sizeof(sockaddr_in);
+ recvfrom(sockfd, buff, sizeof(buff), 0, (sockaddr*)&from, &sockLen);
+
+//there is an equivalent read into buffer using the ethernet lib
+
+ //-------read incoming universe number-------------//
+        incoming_universe=bytes_to_short(buff[15],buff[14])
+        Serial.print("universe number = ");
+        Serial.println(incoming_universe);
+        int in = incoming_universe;
+        int offset = (in-1)*(universeSize);
+
+ //-------remove the header info from the data-----//
+           for(int h=start_address;h< number_of_channels;h++) {
+            buff2[h-start_address]= byte(buff[h+art_net_header_size+1]); }
+  
+  //-------and send to leds with the correct offset for each universe-----//         
+  for (byte i = 0; i < (universeSize*3); i++) {
+ leds.setPixel(i+offset, buff2[(i)*3], buff2[(i*3)+1], buff2[(i*3)+2]);
+     }
+      leds.show();  
+ }
+header size is:
+const int art_net_header_size = 17;
+I still get flicker on the second universe though. hmm…
+
+EDIT: need to add a couple of lines of code that the above uses, and correct the for loop size to (universeSize*3):
+#define bytes_to_short(h,l) ( ((h << 8) & 0xff00) | (l & 0x00FF) );
+const int number_of_channels= (ledsPerStrip*8*3);//channel number
+const int start_address=0;
+short incoming_universe=0;
+
+
+UPDATE (21/02/2014)::: flicker seems to have been related to call to leds.show() being inside the loop rather than called just the once after updating buffer for all universe.
+
+I made some further testing and I don't think it's a buffer issue. If I comment the leds.show() function, I receive all the universes and the sequence number is correct. I have the feeling that as more data gets received, leds.show() takes more time to process and we begin missing udp packets... Not sure how we could optimize this...

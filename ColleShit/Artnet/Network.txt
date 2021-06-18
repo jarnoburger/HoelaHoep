@@ -1,0 +1,69 @@
+Changed UPD buffer size to 530 (as this seems to be the max size of an artdmx packet)
+Adjusted the packet header size to 18 (from 17)
+Changed the formula to calculate universe number to be Art-Net 3 compliant.
+In the main loop that fills the buffer added a check in case we overflow the buffer 
+
+It is more usual for serial devices to use the Block Start Byte 0xC9 however. With this Start Byte, the Packet Number and Packet Count bytes are omitted. This way your sketch can work using the Jinx and Glediator controller software as well. That's why I made some small additions to your sketch, which I post for other to try:
+http://www.tomsoft.nl/files/octotpm2serial_tomsoft.ino
+I couldn't test it for 100% since my led strips still flicker due to the lack of the 74HCT245 buffer IC. But at least I do see the leds get updated from the different controller applications now.
+
+BTW, driving this sketch from ArtNet (using localhost on a PC) is then only a small step away, since Open Lighting Architecture (accepting ArtNet or E1.31/sACN as inputs) now supports TPM2.
+https://forum.pjrc.com/threads/24688-Artnet-to-OctoWS2811/page10?highlight=rgbw
+
+Did you check this ?
+https://github.com/natcl/Artnet
+It already supports multiple universes.
+
+the reason why my arnet won't work; very stupid. I had to modify this code
+Code:
+void Artnet::begin(byte mac[], byte ip[])
+{
+  byte subnet[] = { 255, 0, 0, 0 };                  
+  byte gateway[] = { 2, 0, 0, 1};                   
+  byte dnServer[] = { 2, 0, 0, 1};                   
+  Ethernet.begin(mac,ip,dnServer,gateway,subnet);
+  Udp.begin(ART_NET_PORT);
+}
+i always use subnet 255.0.0.0 but didn't change it in the code. So now i receive artnet :-) very happy. But still thank you to everyone who responded
+
+
+Normally as long as the MAC address is unique on your network it should work...
+
+
+Als niks werkt : https://forum.pjrc.com/threads/24688-Artnet-to-OctoWS2811/page13?highlight=rgbw
+
+start with a normal ip setup
+ip 192.168.1.2
+subnetmask 255.255.255.0 (default, you dont have to set it in the teensy)
+
+Well the "sendFrame" check, while not necessary is still important if you want to be consistent timing wise, otherwise you're not displaying the whole frame at the same time but sequentially... Normally that should not freeze.
+
+Might be because the teensy doesn't get all the universes data, the "sendFrame" check never gets true. Try and comment the check (all the paragraph below, lines 58 to 70 of the code) and see if it's working
+// Store which universe has got in
+if (universe < maxUniverses)
+universesReceived[universe] = 1;
+for (int i = 0 ; i < maxUniverses ; i++)
+{
+if (universesReceived[i] == 0)
+{
+//Serial.println("Broke");
+sendFrame = 0;
+break;
+}
+}
+If this solves your problem, then either you leave this commented, or find what is wrong with the controller software (probably a node configuration issue)
+
+therwise you could try changing this line:
+Code:
+if (universe < maxUniverses)
+To this:
+Code:
+if ((universe -startUniverse) < maxUniverses)
+
+
+Try changing to this:
+Code:
+if ((universe - startUniverse) < maxUniverses)
+    universesReceived[universe - startUniverse] = 1;
+
+    

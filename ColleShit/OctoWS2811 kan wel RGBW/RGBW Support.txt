@@ -1,0 +1,2 @@
+12-05-2020, Paul Stofregen
+Today I have (finally) added RGBW support to OctoWS2811. The new RGBW code is currently only on github. It will be in Teensyduino 1.54 and future releases.

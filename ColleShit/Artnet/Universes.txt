@@ -1,0 +1,20 @@
+not sure about html, but if you are sending info via art-net, the universe number is within the code, theres a little table here:
+http://en.wikipedia.org/wiki/Art-Net
+
+With Art-Net, when you gather the sent data into the receiving buffer, you can grab the universe number and check it, and then do something. As an example, you can grab the universe number by accessing array values 14 and 15:
+
+Code:
+ //-------read incoming universe number-------------//
+        short incoming_universe=bytes_to_short(buff[15],buff[14])
+        Serial.print("universe number = ");
+        Serial.println(incoming_universe);
+virtualdave pointed this out in an earlier post
+
+The idea might then be:
+int in = incoming_universe;
+int offset = in*universe_size;
+leds.setPixel(i+offset, etc…);
+
+i am just trying to put a small example code together for teensy to look at this value and then use this value to determine which leds to sent the info to.
+
+nick1820, i think that your software must be starting at universe number zero, and this is being lost because my artnet code uses the more frequently used universe start number of 1. try changing the line in the artnet_octows2811 sketch from:

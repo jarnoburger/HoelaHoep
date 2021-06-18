@@ -1,0 +1,7 @@
+n Octo library limit of 1365 rgb leds relates quite clearly to 256K RAM (8x1365x24bit=262080bit).
+Wij hebben 1MB.
+Number of LEDs is binary truncated to uint16_t. You can't specify more than 65535. That's what Frank was trying to tell you, in msg #2.
+
+
+eems to crash if I address a universe > 255
+yes, this is because artnet will not count beyond 255 universe, it resets to the first (zero). It has been designed to support 256 universe, thats quite a lot of lighting
