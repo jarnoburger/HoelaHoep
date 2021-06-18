@@ -1,11 +1,14 @@
 #include <Arduino.h>
 #include <FastLED.h>
-#include <ArtnetWifi.h>
-#include <SPI.h>
 #include "FastLED_RGBW.h"
+#include <ArtnetWifi.h>
 #include <WiFiUdp.h>
-#include "Extras.h"
+
 #include <SimpleTimer.h>
+#include <SPI.h>
+
+#include "Extras.h"
+
 
 /*
 Receive multiple universes via Artnet and control a strip of ws2811 leds via OctoWS2811
@@ -35,7 +38,6 @@ UDP over Wifi, especially broadcast, is atrocious and undependable. Possible to 
 You might try re-enabling either the interrrupt retry or interrupts in general before the FastLED include, but that might just make the flickering worse.
 */
 
-
 // Network settings
 const char* ssid = "Amperage";
 const char* password = "MilaSteketee123!";
@@ -56,16 +58,22 @@ const int numberOfPixels = 36; // change for your setup
 // LED MEMORY
 CRGBW leds[numberOfPixels];
 CRGB *ledsRGB = (CRGB *) &leds[0];
+//DMAMEM int displayMemory[ledsPerStrip*8];
 int drawingMemory[numberOfPixels*8];
 SimpleTimer timerShowPixels;
 
+//const int config = WS2811_BRGW | WS2811_800kHz;
+//OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
 
 // Artnet settings
+//JArtnet artnet;
 const int startUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as zero.
 const int numberOfChannels = numberOfPixels * 4; // Total number of channels you want to receive (1 led = 4 channels)
-const int numberOfUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
+const int maxUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
 byte channelBuffer[numberOfChannels]; // Combined universes into a single array
-bool universesReceived[numberOfUniverses];
+
+// Check if we got all universes
+bool universesReceived[maxUniverses];
 bool channelBufferIsFull = false;
 bool showLeds = false;
 int previousDataLength = 0;
@@ -82,12 +90,19 @@ int8_t thisrot = 1;                                           // Hue rotation sp
 uint8_t deltahue = 1;                                         // Hue change between pixels.
 bool thisdir = 0;                                             // I use a direction variable instead of signed math so I can use it in multiple routines.
 
+
+int frames = 0;
+unsigned long lastCompleteFrameTime;
+
 // declare functies
-void WaitForDemoMode();
-void InitTest();
 void OnDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data);
-boolean ConnectNetwork();
+void WaitForDemoMode();
 void DoDemoMode();
+
+void InitTest();
+
+boolean ConnectNetwork();
+void DoNetworkCheck();
 void rainbow_march();
 void DoNetworkCheck();
 void DoShowPixels();
@@ -124,8 +139,9 @@ void setup()
 
   // do artnet
   artnet.begin();
-  Serial.println("Started Artnet");
+  //artnet.setBroadcast(broadcast);
 
+  Serial.println("Started Artnet");
   Serial.print("Number of pixels : ");
   Serial.println(numberOfPixels);
   Serial.print("Number of channels : ");
@@ -133,7 +149,7 @@ void setup()
   Serial.print("Number of universes : ");
   Serial.println(numberOfUniverses);
   Serial.print("Start universe : ");
-  Serial.println(startUniverse);
+ Serial.println(startUniverse);
 
   // led blinker
   digitalWrite(LED_BUILTIN, LOW);
@@ -164,41 +180,25 @@ void WaitForDemoMode(){
   }
 }
 
-// connect to wifi – returns true if successful or false if not
-boolean ConnectNetwork(void)
-{
-  boolean state = true;
-  int i = 0;
-  WiFi.config(ip, myDns, gateway, subnet);
-  WiFi.begin(ssid, password);
-  Serial.println("Connecting to WiFi");
+// wait 3 seconds to see if demo mode gets activated
+void WaitForDemoMode(){
+  pinMode(4, INPUT);  // zet de pin klaar om te luisteren
+  
+  int d = 100; // time between on/off or off/on
+  
+  for (int i = 0; i < 3000; i=i+d){
 
-  // Wait for connection
-  Serial.print("Connecting ");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    if (i > 20){
-      state = false;
-      break;
+    // do blinkie op de achterkant
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(d/2);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(d/2);
+
+    if (digitalRead(4) == true){
+      demoMode = true;
     }
-    i++;
   }
-  if (state){
-    Serial.println("");
-    Serial.print("Connected to ");
-    Serial.println(ssid);
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
-  } else {
-    Serial.println("");
-    Serial.println("Connection failed.");
-  }
-
-  return state;
 }
-
-int frames = 0;
 
 void loop()
 {
@@ -213,67 +213,23 @@ void loop()
   }
 
   // we call the read function inside the loop
-  artnet.read();
+  if (artnet.read() == ART_DMX)
+  //artnet.read();
 
   timerNetwork.run();
   timerShowPixels.run();
   //digitalWrite(LED_BUILTIN, LOW);
-}
+  { 
+    // set the blink led to high , because there was a packet
+    digitalWrite(LED_BUILTIN, HIGH);
 
-unsigned long lastCompleteFrameTime;
+    // we call the read function inside the loop
+    artnet.read();
+  }
 
-void OnDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data)
-{
-  digitalWrite(LED_BUILTIN, HIGH);
+  // set the blink led to low , because there was no packet
+  digitalWrite(LED_BUILTIN, LOW);
   
-  if (debugArtnet) DebugArtNet(artnet);
-  
-  // we wachten totdat elke universe gevuld is 
-  // als er een universe van de hele mik, nog niet data heeft recieved (universeRecieved[]==0), dan wordt channelBufferIsFull 0
-  // als elke universe gevuld is , dan blijft channelBufferIsFull 1 , en roepen we de Led Show functie aan.
-
-  channelBufferIsFull = 1;
-
-  // set brightness of the whole strip
-  if (universe == 15)
-  {
-    FastLED.setBrightness(data[0]);
-    FastLED.show();
-  }
-
-  // Store which universe has got in
-  if (universe < numberOfUniverses){
-    universesReceived[universe] = 1;
-  }
-
-  // walk by each universe , to see if they are all populated so show a frame , if not , then channelBufferIsFull = 0, and we will not shows the leds yet.
-  for (int i = 0 ; i < numberOfUniverses ; i++)
-  {
-    if (universesReceived[i] == 0)
-    {     
-      channelBufferIsFull = 0;
-
-      break;
-    }
-  }
-
-  // read the universes and put into the right part of the display buffer
-  for (int i = 0; i < length / 4; i++)
-  {
-    int led = i + (universe - startUniverse) * (previousDataLength / 4);
-    
-    if (led < numberOfPixels)
-    {
-      // set the leds at ledIndex , to given RGBW channels for 1 pixel
-      leds[led] = CRGBW(
-        data[(i * 4) + 0], 
-        data[(i * 4) + 1], 
-        data[(i * 4) + 2],
-        data[(i * 4) + 3]);
-    }
-  }
-  previousDataLength = length;
-
   // if all the universe were filed , we can show the leds.
   if (channelBufferIsFull)
   {
@@ -313,9 +269,9 @@ void DoDemoMode(){
     }
   }
 
-  EVERY_N_MILLISECONDS(thisdelay) {                           // FastLED based non-blocking delay to update/display the sequence.
+  //EVERY_N_MILLISECONDS(thisdelay) {                           // FastLED based non-blocking delay to update/display the sequence.
     rainbow_march();
-  }
+  //}
 
   FastLED.show();
 } // part of DoDemoMode()
@@ -324,21 +280,155 @@ void rainbow_march() {                                        // The fill_rainbo
   
   if (thisdir == 0) thishue += thisrot; else thishue-= thisrot;  // I could use signed math, but 'thisdir' works with other routines.
 
-  CHSV hsv;
-  hsv.hue = thishue;
-  hsv.val = 255;
-  hsv.sat = 240;
-  for( int i = 0; i < numberOfPixels; ++i) {
-      leds[i] = hsv;
-      hsv.hue += deltahue;
-  }
+  //CHSV hsv;
+  //hsv.hue = thishue;
+  //hsv.val = 255;
+  //hsv.sat = 240;
+  //for( int i = 0; i < numberOfPixels; ++i) {
+  //    leds[i] = hsv;
+  //    hsv.hue += deltahue;
+  //}
 } // rainbow_march()
+
+void DebugArtNet(){
+    // print out our data
+    Serial.print("universe number = ");
+    Serial.print(artnet.getUniverse());
+    Serial.print("\tdata length = ");
+    Serial.print(artnet.getLength());
+    Serial.print("\tsequence n0. = ");
+    Serial.println(artnet.getSequence());
+    Serial.print("DMX data: ");
+    for (int i = 0 ; i < artnet.getLength() ; i++)
+    {
+      Serial.print(artnet.getDmxFrame()[i]);
+      Serial.print("  ");
+    }
+    Serial.println();
+    Serial.println();
+}
+
+void OnDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data)
+{
+  Serial.println("x");
+  digitalWrite(LED_BUILTIN, HIGH);
+  
+  if (debugArtnet) DebugArtNet(artnet);
+  
+  // we wachten totdat elke universe gevuld is 
+  // als er een universe van de hele mik, nog niet data heeft recieved (universeRecieved[]==0), dan wordt channelBufferIsFull 0
+  // als elke universe gevuld is , dan blijft channelBufferIsFull 1 , en roepen we de Led Show functie aan.
+
+  channelBufferIsFull = 1;
+
+  // set brightness of the whole strip
+  if (universe == 15)
+  {
+    FastLED.setBrightness(data[0]);
+    FastLED.show();
+  }
+
+  // Store which universe has got in
+  if (universe < maxUniverses)
+    universesReceived[universe] = 1;
+  }
+
+  // walk by each universe , to see if they are all populated so show a frame , if not , then channelBufferIsFull = 0, and we will not shows the leds yet.
+  for (int i = 0 ; i < maxUniverses ; i++)
+  {
+    if (universesReceived[i] == 0)
+    {     
+      //Serial.println("Broke");
+      channelBufferIsFull = 0;
+
+      break;
+    }
+  }
+
+  // read the universes and put into the right part of the display buffer
+  for (int i = 0; i < length / 4; i++)
+  {
+    int led = i + (universe - startUniverse) * (previousDataLength / 4);
+    
+    if (led < numberOfPixels)
+    {
+	  
+	  // channelBuffer[bufferIndex] = byte(data[i]);
+      // set the leds at ledIndex , to given RGBW channels for 1 pixel
+      leds[led] = CRGBW(
+        data[(i * 4) + 0], 
+        data[(i * 4) + 1], 
+        data[(i * 4) + 2],
+        data[(i * 4) + 3]);
+    }
+
+  // send to leds
+  //byte first;
+  //for (int i = 0; i < ledsPerStrip; i++)
+  //{
+  //  first = i * 4;
+  //  leds.setPixel(i, 
+  //                channelBuffer[first + 0], 
+  //                channelBuffer[first + 1], 
+  //                channelBuffer[first + 2] , 
+  //                channelBuffer[first + 3]);
+  }      
+  previousDataLength = length;
+
+
+
+  // set the blink led to low , because there was no packet
+  digitalWrite(LED_BUILTIN, LOW);
+  
+  // if all the universe were filed , we can show the leds.
+  if (bufferFull)
+  {
+    showFrame = true;
+    leds.show();
+    // Reset universeReceived to 0
+    memset(universesReceived, 0, maxUniverses);
+  }
+}
+
+boolean ConnectNetwork(void)
+{
+  boolean state = true;
+  int i = 0;
+  WiFi.config(ip, myDns, gateway, subnet);
+  WiFi.begin(ssid, password);
+  Serial.println("Connecting to WiFi");
+
+  // Wait for connection
+  Serial.print("Connecting ");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+    if (i > 20){
+      state = false;
+      break;
+    }
+    i++;
+  }
+  if (state){
+    Serial.println("");
+    Serial.print("Connected to ");
+    Serial.println(ssid);
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println("");
+    Serial.println("Connection failed.");
+  }
+
+  return state;
+}
 
 void DoNetworkCheck(){
   if (demoMode) {
     Serial.println("Demo mode");
     return;
   }
+
   int status = WiFi.status();
   // attempt to connect to Wifi network:
   if (status == WL_CONNECTED)

@@ -63,7 +63,7 @@ uint16_t JArtnet::read()
   if (packetSize <= MAX_BUFFER_ARTNET && packetSize > 0)
   {
       int got = Udp.read(artnetPacket, MAX_BUFFER_ARTNET);
-      Serial.println(got);
+      //Serial.println(got);
       
       // debug packet
       //for (int i =0;i<packetSize ; i++)

@@ -1,9 +1,12 @@
+#include "Extras.h"
 #include <Arduino.h>
 
 #include <NativeEthernet.h>
 #include <NativeEthernetUdp.h>
 
-#include "Extras.h"
+#include <FastLED.h>
+#include "FastLED_RGBW.h"
+
 #include "JArtnet.h"
 
 char packetBuffer[255]; //buffer to hold incoming packet

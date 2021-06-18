@@ -5,6 +5,8 @@
 
 #include "JArtnet.h"
 
+#include <FastLED.h>
+#include "FastLED_RGBW.h"
 void DebugUdp(EthernetUDP udp);
 void DebugArtNet(JArtnet artnet);
 
