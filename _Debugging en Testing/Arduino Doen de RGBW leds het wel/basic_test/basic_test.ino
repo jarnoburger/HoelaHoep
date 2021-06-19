@@ -94,8 +94,11 @@ void loop() {
 void colorWipe(int color, int wait)
 {
   Serial.println(leds.numPixels());
-  for (int i=0; i < ledsPerStrip; i++) {
-    leds.setPixel(i, color);
+  for (int w=0; w < ledsPerStrip; w = w + 12){
+    for (int i=0; i < 12; i++) {
+      leds.setPixel(w+i, color);
+    }
     leds.show();
+    delay(100);
   }
 }
