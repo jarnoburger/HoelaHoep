@@ -1,81 +1,76 @@
-//version3 - 8th March 2014 - uses universeSize and requires first_universe_number
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-// libraries
 #include <stdlib.h>
 #include <NativeEthernet.h>
 #include <NativeEthernetUdp.h>
 #include <SPI.h>
 #include <OctoWS2811.h>
-// +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-/* uses libs and open licence stufffrom many sources incl. PJRC and ArtisticLicence.*/
-//this sketch is a cut down test for receiving Art-net packages via ethernet
-/* ****************************************************
-  To get this to work for you, YOU NEED TO CHANGE:
-  1) the mac address and IP info to same as your artnet sender
-  2) change leds per strip and universe size (universeSize is size of software output universe selected)
-  3) ensure buff2 size is large enough to take complete led array data set for each frame
-  4) check first_universe_number, can be found using test sketch (usually is 1, sometimes is zero).
 
-  for example, in pixelcontroller i have set the array of 60*8 leds, the universe size set to 30
-  and the IP set to 192, 168, 1, 10, and port always remains 6454. At the moment, I can only get
-  the frame rate max at 15fps, with 480 leds
-
-  so for the sketch, I have ledsPerStrip=60, and I need to set universe size to 30
-  number of channels and channel buffer go to 90 automatically (as 3*30). buff2 size can be smaller or biggger
-  depending on the total array buffer size requied.
-******************************************************** */
-
-#define bytes_to_short(h,l) ( ((h << 8) & 0xff00) | (l & 0x00FF) );
-
-//-------------------- for OctoWS8211--------------------//
-const int ledsPerStrip = 12*40;
-const int RGBWByteLength = 8; 
-// a int is 4 bytes.
-// 6 ints is 24 bytes is RGB
-// 8 ints is 32 bytes is RGBW
-DMAMEM int displayMemory[ledsPerStrip * RGBWByteLength];
-int drawingMemory[ledsPerStrip * RGBWByteLength];
-//const int config = WS2811_GRBW;
-const int config = WS2811_GRBW | WS2811_800kHz;
-OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
+//------------------------------LED------------------------------------//
+const int ledsPerStrip     = 12*40;                                    // Alle wolkjes x 12 leds. Of alle ledjes in een cirkel. 
+const int RGBWByteLength   =     8;                                    // 1 Int is 4 Bytes. 6 Ints is 24 Bytes is RGB. 8 Ints is 32 Bytes is RGBW
+DMAMEM int displayMemory[ledsPerStrip * RGBWByteLength];               // The DMA memory display block needs to be big enough to fill all the RGBW leds. Is the memory that is sent to the leds.
+int drawingMemory[ledsPerStrip * RGBWByteLength];                      // This is a temp memory block where we park the values in the right order.
+const int config = WS2811_GRBW | WS2811_800kHz;                        // WS2811_GRB or WS2811_GRBW
+OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);   // Object contains the leds
 //----------------end of octows2811 inputs----------------//
 
-// --------------- for NETWORK ---------------------------//
-byte mac[] = {   0x90, 0xA2, 0xDA, 0x0D, 0x4C, 0x8C}  ; //the mac adress in HEX of ethernet module/shield
-byte ip[] = { 192, 168, 2, 200}; // the IP adress of your device, that should be in same universe of the network you are using
-unsigned int localPort = 6454;      // DO NOT CHANGE artnet UDP port is by default 6454
-// -------------end of NETWORK ---------------------------//
+// ----------------- NETWORK -----------------------------//
+byte mac[]     = { 0x90, 0xA2, 0xDA, 0x0D, 0x4C, 0x8C}  ; // the mac adress in HEX of ethernet module/shield
+byte ip[]      = {  192,  168,    2,  200};               // the IP adress of your device, that should be in same universe of the network you are using
+byte subnet[]  = {  255,  255,  255,    0};               // alleen de ip adressen van 192.168.0.xxx moeten beantwoord worden (bijv udp-reply)
+byte gateway[] = {  192,  168,    2,    1};               // hier moet de ip adres van de router staan (deze verdeeld de packets overal (dus ook een udp-reply)
+byte dns[]     = {  192,  168,    2,    1};               // hier moet de ip adres van de router staan (is eigenlijk voor WWW , maar moet mee in de initializer
+unsigned int localPort = 6454;                            // DO NOT CHANGE artnet UDP port is by default 6454
+// -------------------------------------------------------//
 
-//---------------artnet and buffers-----------------------//
-EthernetUDP Udp;
-const int first_universe_number = 0;//CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as zero.
-const int universeSize = 4;//used for doublecheking if given universe in the artnetpacket  should be dealt with, or not
-const int number_of_channels = 480; // 512 channels in 1 universe , maar we gebruiken er 480 van, dus we moeten wat overslaan met sturen naar de led >> 8xrgbw=32 channels overslaan.
-byte channel_buffer[number_of_channels];//buffer to store filetered DMX data//SHOULD BE SAME AS number_of_channels
-byte buff2[2000];// increase buffer for filtered data to cover size of your total array(removed art-net header)
-const int MAX_BUFFER_UDP = 768;//leave as is
-char packetBuffer[MAX_BUFFER_UDP]; //buffer to store incoming data
-short incoming_universe = 0; //leave as is (if suspect uni number issues, try changing first_uni number above first.
-const int start_address = 0; // 0 if you want to read from channel 1
-const int art_net_header_size = 17;
-int sequenceCount = 0;
-// ------------end of arnet and buffers ------------------//
+//---------------ARTNET and BUFFERS-----------------------//
+EthernetUDP Udp;                                          // The class we listen with
+const int first_universe_number     = 0;                  // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as zero.
+const int universeSize              = 4;                  // used for doublecheking if given universe in the artnetpacket  should be dealt with, or not
+const int number_of_channels      = 480;                  // 512 channels in 1 universe , maar we gebruiken er 480 van, dus we moeten wat overslaan met sturen naar de led >> 8xrgbw=32 channels overslaan.
+byte channel_buffer[number_of_channels];                  // buffer to store filetered DMX data//SHOULD BE SAME AS number_of_channels
+byte buff2[2000]                       ;                  // increase buffer for filtered data to cover size of your total array(removed art-net header)
+const int MAX_BUFFER_UDP          = 768;                  // leave as is , this is big enough to get artnet packets
+char packetBuffer[MAX_BUFFER_UDP]      ;                  // buffer to store incoming data
+short incoming_universe             = 0;                  // leave as is (if suspect uni number issues, try changing first_uni number above first.
+const int start_address             = 0;                  // 0 if you want to read from channel 1
+const int art_net_header_size      = 17;                  // we skip these bytes in the data poacket, to get to the universe and channels
+int sequenceCount                   = 0;                  // we dont used this , but this is to get the right order of packets
+// -------------------------------------------------------//
+
+#define bytes_to_short(h,l) ( ((h << 8) & 0xff00) | (l & 0x00FF) );
 
 void setup() {
   //setup serial
   Serial.begin(115200);
-  Serial.println("Hellow world!");
-
+  Serial.flush();
+  Serial.setTimeout(20);
+  Serial.println("Hello world!");
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(250);
+  digitalWrite(LED_BUILTIN, LOW);  
+  delay(250);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(250);
+  digitalWrite(LED_BUILTIN, LOW);  
+  delay(250);
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(250);
+  digitalWrite(LED_BUILTIN, LOW);  
+  delay(250);
+  
   // do a init tests for the leds
-  Serial.println("Initialize leds");
+  Serial.println("*** Initialize leds");
   InitLeds();
     
   //setup ethernet and udp socket
-  Serial.println("Setup ethernet");
+  Serial.println("*** Initialize ethernet");
   InitNetwork();
   
   // show a blue blinkie blinkie to say we are running
+  Serial.println("*** Do blue blink blink");
   BlueBlinkieBlinkie();
+
+  Serial.println("*** Ready");
 }
 
 void loop() {
@@ -122,7 +117,6 @@ void OnDMXFrame(){
   for (int i = 0; i < number_of_channels; i++) {
     buff2[i + ((incoming_universe - first_universe_number)*number_of_channels)] = channel_buffer[i - start_address];
   }
-  //Serial.println();
 
   //-----set the pixels in the ledstrip and show it-----------------------------------------//
   sequenceCount++;
@@ -182,30 +176,76 @@ void ShowLeds(){
 }
 
 void InitNetwork(){
+  // retrieve mac adress
+  Serial.print("Mac                               : ");
+  for(uint8_t by=0; by<2; by++) mac[by]=(HW_OCOTP_MAC1 >> ((1-by)*8)) & 0xFF;
+    for(uint8_t by=0; by<4; by++) mac[by+2]=(HW_OCOTP_MAC0 >> ((3-by)*8)) & 0xFF;
+  Serial.printf("%02x:%02x:%02x:%02x:%02x:%02x\n", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+  Serial.print("IP                                : ");
+  Serial.printf("%03d.%03d.%03d.%03d\n", ip[0], ip[1], ip[2], ip[3]);
+
+  Serial.print("GATEWAY                           : ");
+  Serial.printf("%03d.%03d.%03d.%03d\n", gateway[0], gateway[1], gateway[2], gateway[3]);
+
+  Serial.print("SUBNET                            : ");
+  Serial.printf("%03d.%03d.%03d.%03d\n", subnet[0], subnet[1], subnet[2], subnet[3]);
+
+  Serial.print("DNS                               : ");
+  Serial.printf("%03d.%03d.%03d.%03d\n", dns[0], dns[1], dns[2], dns[3]);
+
+  Serial.print("UDP-port                          : ");
+  Serial.println(localPort);
+
+  Serial.print("UDP incoming-buffer byte-size     : ");
+  Serial.println(sizeof(packetBuffer));
+      
   Ethernet.begin(mac, ip);
   delay(250);
-  
-  Serial.print("Mac : ");
-  for (int i=0;i<5;i++){
-      Serial.print(":");
-      Serial.print(mac[i]);
-  }
-  Serial.println();
-  
-  Serial.print("IP : ");
-  for (int i=0;i<5;i++){
-    Serial.print(".");
-    Serial.print(ip[i]);
-  }
-  Serial.println();
+  Serial.println("Ethernet.begin()                  : SUCCES !");
 
-  Serial.println("Setup UDP");
   Udp.begin(localPort);
-  delay(250);
+  delay(250);  
+  Serial.println("UDP.begin()                       : SUCCES !");
+
   //if nothing appears after this, then the loop is not receiving your artnet package
 }
 
 void InitLeds(){
+  if (RGBWByteLength == 6){
+    Serial.println("The led type used is              : RGB  (3x2 Bytes)");
+  }
+  if (RGBWByteLength == 8) {
+    Serial.println("We are using RGBW leds            : RGBW (4x2 Bytes)");
+  }
+  
+  Serial.print("Leds per strip                    : ");
+  Serial.println(ledsPerStrip);
+
+  Serial.print("Incoming channel-buffer byte-size : ");
+  Serial.println(sizeof(channel_buffer));
+
+  Serial.print("Display-memory byte-size          : ");
+  Serial.println(sizeof(displayMemory)); 
+
+  Serial.print("Drawing-memory byte-size          : ");
+  Serial.println(sizeof(drawingMemory));
+
+  Serial.print("First universe                    : ");
+  Serial.println(first_universe_number);
+
+  Serial.print("Number of universes               : ");
+  Serial.println(universeSize);
+
+  Serial.print("Number of channels in a universe  : ");
+  Serial.println(number_of_channels);
+
+  Serial.print("Begin to listen to universe       : ");
+  Serial.println(incoming_universe); 
+
+  Serial.print("Begin to listen to channel        : ");
+  Serial.println(start_address);
+  
   leds.begin();
   // blink 12 leds in a row , blinking alle the leds
   for (int w=0;w<ledsPerStrip;w=w+12){

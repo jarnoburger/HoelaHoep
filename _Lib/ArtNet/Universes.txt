@@ -1,4 +1,4 @@
-not sure about html, but if you are sending info via art-net, the universe number is within the code, theres a little table here:
+ not sure about html, but if you are sending info via art-net, the universe number is within the code, theres a little table here:
 http://en.wikipedia.org/wiki/Art-Net
 
 With Art-Net, when you gather the sent data into the receiving buffer, you can grab the universe number and check it, and then do something. As an example, you can grab the universe number by accessing array values 14 and 15:
