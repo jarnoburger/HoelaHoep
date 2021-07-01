@@ -1,14 +1,11 @@
 #include <Arduino.h>
-#include <FastLED.h>
-#include "FastLED_RGBW.h"
-#include <ArtnetWifi.h>
+#include <WiFiNINA.h>
 #include <WiFiUdp.h>
-
 #include <SimpleTimer.h>
 #include <SPI.h>
-
-#include "Extras.h"
-
+#define FASTLED_INTERNAL
+#include <FastLED.h>
+#include "FastLED_RGBW.h"
 
 /*
 Receive multiple universes via Artnet and control a strip of ws2811 leds via OctoWS2811
@@ -38,39 +35,41 @@ UDP over Wifi, especially broadcast, is atrocious and undependable. Possible to 
 You might try re-enabling either the interrrupt retry or interrupts in general before the FastLED include, but that might just make the flickering worse.
 */
 
+#define bytes_to_short(h,l) ( ((h << 8) & 0xff00) | (l & 0x00FF) );
+
 // Network settings
-const char* ssid = "Amperage";
+const char* ssid = "BEAM";
 const char* password = "MilaSteketee123!";
-ArtnetWifi artnet;
-IPAddress ip(192, 168, 2, 240);
-IPAddress myDns(192, 168, 2, 1);
-IPAddress gateway(192, 168, 2, 1);
+IPAddress ip(192, 168, 1, 106);
+IPAddress myDns(192, 168, 1, 1);
+IPAddress gateway(192, 168, 1, 1);
 IPAddress subnet(255, 255, 255, 0);
 byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 WiFiUDP Udp;
 SimpleTimer timerNetwork;
 
 // LED settings
-const int numberOfPixels = 36; // change for your setup
+const int numberOfPixels = (6*144)+8;  // change for your setup
 #define DATA_PIN 2
 #define FPS 25
 
 // LED MEMORY
 CRGBW leds[numberOfPixels];
 CRGB *ledsRGB = (CRGB *) &leds[0];
-//DMAMEM int displayMemory[ledsPerStrip*8];
 int drawingMemory[numberOfPixels*8];
 SimpleTimer timerShowPixels;
 
-//const int config = WS2811_BRGW | WS2811_800kHz;
-//OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);
-
 // Artnet settings
-//JArtnet artnet;
 const int startUniverse = 0; // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as zero.
-const int numberOfChannels = numberOfPixels * 4; // Total number of channels you want to receive (1 led = 4 channels)
-const int maxUniverses = numberOfChannels / 512 + ((numberOfChannels % 512) ? 1 : 0);
-byte channelBuffer[numberOfChannels]; // Combined universes into a single array
+const int numberOfChannels = 110*4; // Total number of channels you want to receive (1 led = 4 channels) 110x4 leds in 1 unverse
+const int maxUniverses = 1;
+const int MAX_BUFFER_UDP          = 768;                  // leave as is , this is big enough to get artnet packets
+char packetBuffer[MAX_BUFFER_UDP]      ;                  // buffer to store incoming data
+const int art_net_header_size      = 17;                  // we skip these bytes in the data poacket, to get to the universe and channels
+unsigned int localPort = 6454;                            // DO NOT CHANGE artnet UDP port is by default 6454
+byte channel_buffer[numberOfChannels];                  // buffer to store filetered DMX data//SHOULD BE SAME AS number_of_channels
+byte buff2[4000]                       ;                  // increase buffer for filtered data to cover size of your total array(removed art-net header)
+
 
 // Check if we got all universes
 bool universesReceived[maxUniverses];
@@ -80,7 +79,7 @@ int previousDataLength = 0;
 
 // debug
 bool demoMode = false;
-bool debugArtnet = false;
+bool debugArtnet = true;
 bool debugUdp = false;
 
 // Demo mode variables
@@ -89,7 +88,6 @@ uint8_t thishue = 0;                                          // Starting hue va
 int8_t thisrot = 1;                                           // Hue rotation speed. Includes direction.
 uint8_t deltahue = 1;                                         // Hue change between pixels.
 bool thisdir = 0;                                             // I use a direction variable instead of signed math so I can use it in multiple routines.
-
 
 int frames = 0;
 unsigned long lastCompleteFrameTime;
@@ -106,6 +104,7 @@ void DoNetworkCheck();
 void rainbow_march();
 void DoNetworkCheck();
 void DoShowPixels();
+void OnDMXFrame();
 
 void setup()
 {
@@ -137,27 +136,20 @@ void setup()
   ConnectNetwork();
   timerNetwork.setInterval(30000, DoNetworkCheck);
 
-  // do artnet
-  artnet.begin();
-  //artnet.setBroadcast(broadcast);
-
   Serial.println("Started Artnet");
   Serial.print("Number of pixels : ");
   Serial.println(numberOfPixels);
   Serial.print("Number of channels : ");
   Serial.println(numberOfChannels);
   Serial.print("Number of universes : ");
-  Serial.println(numberOfUniverses);
+  Serial.println(maxUniverses);
   Serial.print("Start universe : ");
- Serial.println(startUniverse);
+  Serial.println(startUniverse);
 
   // led blinker
   digitalWrite(LED_BUILTIN, LOW);
 
-  artnet.setArtDmxCallback(OnDmxFrame);
   Serial.println("Artnet ready to recieve");
-
-  timerShowPixels.setInterval(1000/50, DoShowPixels);
 }
 
 // wait 3 seconds to see if demo mode gets activated
@@ -180,32 +172,9 @@ void WaitForDemoMode(){
   }
 }
 
-// wait 3 seconds to see if demo mode gets activated
-void WaitForDemoMode(){
-  pinMode(4, INPUT);  // zet de pin klaar om te luisteren
-  
-  int d = 100; // time between on/off or off/on
-  
-  for (int i = 0; i < 3000; i=i+d){
-
-    // do blinkie op de achterkant
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(d/2);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(d/2);
-
-    if (digitalRead(4) == true){
-      demoMode = true;
-    }
-  }
-}
-
+int t = 0;
 void loop()
 {
-  if (debugUdp){
-    DebugUdp(Udp);
-  }
-
   // when we do demo mode , do it and return
   if (demoMode){
     DoDemoMode();
@@ -213,28 +182,12 @@ void loop()
   }
 
   // we call the read function inside the loop
-  if (artnet.read() == ART_DMX)
-  //artnet.read();
-
-  timerNetwork.run();
-  timerShowPixels.run();
-  //digitalWrite(LED_BUILTIN, LOW);
+  int packetSize = Udp.parsePacket();
+  if (packetSize > 0 && packetSize< MAX_BUFFER_UDP)
   { 
-    // set the blink led to high , because there was a packet
-    digitalWrite(LED_BUILTIN, HIGH);
-
-    // we call the read function inside the loop
-    artnet.read();
+    OnDMXFrame();
   }
-
-  // set the blink led to low , because there was no packet
-  digitalWrite(LED_BUILTIN, LOW);
-  
-  // if all the universe were filed , we can show the leds.
-  if (channelBufferIsFull)
-  {
-    showLeds = true;
-  }
+  timerNetwork.run();
 }
 
 void DoDemoMode(){
@@ -290,104 +243,44 @@ void rainbow_march() {                                        // The fill_rainbo
   //}
 } // rainbow_march()
 
-void DebugArtNet(){
-    // print out our data
-    Serial.print("universe number = ");
-    Serial.print(artnet.getUniverse());
-    Serial.print("\tdata length = ");
-    Serial.print(artnet.getLength());
-    Serial.print("\tsequence n0. = ");
-    Serial.println(artnet.getSequence());
-    Serial.print("DMX data: ");
-    for (int i = 0 ; i < artnet.getLength() ; i++)
-    {
-      Serial.print(artnet.getDmxFrame()[i]);
-      Serial.print("  ");
-    }
-    Serial.println();
-    Serial.println();
-}
-
-void OnDmxFrame(uint16_t universe, uint16_t length, uint8_t sequence, uint8_t* data)
+void OnDMXFrame()
 {
-  Serial.println("x");
-  digitalWrite(LED_BUILTIN, HIGH);
+  if (Udp.read(packetBuffer, MAX_BUFFER_UDP) == 0) return;
+  Serial.println(sizeof(packetBuffer));
+  int incoming_universe = bytes_to_short(packetBuffer[15], packetBuffer[14])
+  if (incoming_universe ==        6454) { return; }
+  if (incoming_universe <            0) { return; }
+  if (incoming_universe > maxUniverses) { return; }
+  Serial.println(incoming_universe);
+
+  //-------read incoming universe and put into channel_buffer-------------------------------//
+  for (int i = 0; i < numberOfChannels; i++) {
+    // strip the header from the packet buffer, and read the rest into or temp channelbuffer
+    channel_buffer[i] = byte(packetBuffer[i + art_net_header_size + 1]);
+  }
+
   
-  if (debugArtnet) DebugArtNet(artnet);
-  
-  // we wachten totdat elke universe gevuld is 
-  // als er een universe van de hele mik, nog niet data heeft recieved (universeRecieved[]==0), dan wordt channelBufferIsFull 0
-  // als elke universe gevuld is , dan blijft channelBufferIsFull 1 , en roepen we de Led Show functie aan.
-
-  channelBufferIsFull = 1;
-
-  // set brightness of the whole strip
-  if (universe == 15)
-  {
-    FastLED.setBrightness(data[0]);
-    FastLED.show();
+  for (int i = 0; i < numberOfChannels; i++) {
+    buff2[i + ((incoming_universe )*numberOfChannels)] = channel_buffer[i];
   }
-
-  // Store which universe has got in
-  if (universe < maxUniverses)
-    universesReceived[universe] = 1;
-  }
-
-  // walk by each universe , to see if they are all populated so show a frame , if not , then channelBufferIsFull = 0, and we will not shows the leds yet.
-  for (int i = 0 ; i < maxUniverses ; i++)
-  {
-    if (universesReceived[i] == 0)
-    {     
-      //Serial.println("Broke");
-      channelBufferIsFull = 0;
-
-      break;
-    }
-  }
+  memset(channel_buffer,0, sizeof(channel_buffer));
 
   // read the universes and put into the right part of the display buffer
-  for (int i = 0; i < length / 4; i++)
+  int row = numberOfChannels / 4;
+  for (int i = 0; i < numberOfChannels / 4; i++)
   {
-    int led = i + (universe - startUniverse) * (previousDataLength / 4);
-    
-    if (led < numberOfPixels)
-    {
-	  
-	  // channelBuffer[bufferIndex] = byte(data[i]);
+    for (int r = 0; r < 8;r++){
       // set the leds at ledIndex , to given RGBW channels for 1 pixel
-      leds[led] = CRGBW(
-        data[(i * 4) + 0], 
-        data[(i * 4) + 1], 
-        data[(i * 4) + 2],
-        data[(i * 4) + 3]);
+      int t = (i* 4);
+      leds[i+r*row].r = buff2[t + 0];
+      leds[i+r*row].g = buff2[t + 1];
+      leds[i+r*row].b = buff2[t + 2];
+      leds[i+r*row].w = buff2[t + 3];
     }
-
-  // send to leds
-  //byte first;
-  //for (int i = 0; i < ledsPerStrip; i++)
-  //{
-  //  first = i * 4;
-  //  leds.setPixel(i, 
-  //                channelBuffer[first + 0], 
-  //                channelBuffer[first + 1], 
-  //                channelBuffer[first + 2] , 
-  //                channelBuffer[first + 3]);
-  }      
-  previousDataLength = length;
-
-
-
-  // set the blink led to low , because there was no packet
-  digitalWrite(LED_BUILTIN, LOW);
-  
-  // if all the universe were filed , we can show the leds.
-  if (bufferFull)
-  {
-    showFrame = true;
-    leds.show();
-    // Reset universeReceived to 0
-    memset(universesReceived, 0, maxUniverses);
   }
+
+  FastLED.show();  
+  //FastLED.delay(30);
 }
 
 boolean ConnectNetwork(void)
@@ -415,6 +308,9 @@ boolean ConnectNetwork(void)
     Serial.println(ssid);
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+
+    Udp.begin(localPort);
+
   } else {
     Serial.println("");
     Serial.println("Connection failed.");
@@ -440,7 +336,6 @@ void DoNetworkCheck(){
     Serial.println("Disconnected, retry..");
     WiFi.end();
     ConnectNetwork();
-    artnet.begin();
   }
   else if (status == WL_CONNECTION_LOST)
   { 
@@ -451,14 +346,4 @@ void DoNetworkCheck(){
   { 
     Serial.println("Connection failed");
   }
-}
-
-void DoShowPixels(){
-  if (showLeds == true){
-    FastLED.show();  
-    memset(universesReceived, 0, numberOfUniverses); // Reset universeReceived to 0
-    FastLED.delay(1000/FPS);
-    digitalWrite(LED_BUILTIN, LOW);
-  }
-
 }
