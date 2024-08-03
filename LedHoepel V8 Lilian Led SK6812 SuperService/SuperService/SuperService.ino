@@ -7,12 +7,12 @@
 //------------------------------LED------------------------------------//
 //const int ledsPerStrip   =     12*40;                                // Alle wolkjes x 12 leds. 
 const int ledsPerStrip     = (6*144)+9;                                // Alle ledjes in een cirkel , dus 6 meter x 144 leds + een beetje 
-const int RGBWByteLength   =         8;                                // 1 Int is 4 Bytes. 6 Ints is 24 Bytes is RGB. 8 Ints is 32 Bytes is RGBW
-DMAMEM int displayMemory[ledsPerStrip * RGBWByteLength];               // The DMA memory display block needs to be big enough to fill all the RGBW leds. Is the memory that is sent to the leds.
+const int RGBWByteLength   =         6;                                // 1 Int is 4 Bytes. 6 Ints is 24 Bytes is RGB. 8 Ints is 32 Bytes is RGBW
+DMAMEM int displayMemory[ledsPerStrip * RGBWByteLength];               // The DMA memory display block needs to be big enough to fill all the RGB leds. Is the memory that is sent to the leds.
 int drawingMemory[ledsPerStrip * RGBWByteLength];                      // This is a temp memory block where we park the values in the right order.
-//const int config = WS2811_GRBW | WS2811_800kHz;                      // WS2811_GRB or WS2811_GRBW
-const int config = WS2811_GRBW;                                        // WS2811_GRB or WS2811_GRBW
+const int config = WS2811_GRB;                                         // WS2811_GRB or WS2811_GRBW
 OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);   // Object contains the leds
+
 //----------------end of octows2811 inputs----------------//
 
 // ----------------- NETWORK -----------------------------//
@@ -127,23 +127,10 @@ void OnDMXFrame(){
   if (sequenceCount > 7){
       for (int i = 0; i < ledsPerStrip * 8; i++) {
         
-        //byte r = buff2[(i * 4) + 0];
-        //byte g = buff2[(i * 4) + 1];
-        //byte b = buff2[(i * 4) + 2];
-        //byte w = buff2[(i * 4) + 3];
-        //Serial.print("Index");
-        //Serial.print(i);
-        //Serial.print("R");
-        //Serial.print(r);
-        //Serial.print(" G");
-        //Serial.print(g);
-        //Serial.print(" B");
-        //Serial.println(b);
         leds.setPixel(i,
-        buff2[(i * 4) + 0] , 
+        buff2[(i * 4) + 0], 
         buff2[(i * 4) + 1], 
-        buff2[(i * 4) + 2],
-        buff2[(i * 4) + 3]);
+        buff2[(i * 4) + 2]);
       }
       
       leds.show();
@@ -155,24 +142,10 @@ void ShowLeds(){
     //------send to leds----//
   for (int i = 0; i < ledsPerStrip * 8; i++) {
     
-    //byte r = buff2[(i * 4) + 0];
-    //byte g = buff2[(i * 4) + 1];
-    //byte b = buff2[(i * 4) + 2];
-    //byte w = buff2[(i * 4) + 3];
-    //Serial.print("Index");
-    //Serial.print(i);
-    //Serial.print("R");
-    //Serial.print(r);
-    //Serial.print(" G");
-    //Serial.print(g);
-    //Serial.print(" B");
-    //Serial.println(b);
-    
     leds.setPixel(i,
-    buff2[(i * 4) + 0] , 
+    buff2[(i * 4) + 0], 
     buff2[(i * 4) + 1], 
-    buff2[(i * 4) + 2],
-    buff2[(i * 4) + 3]);
+    buff2[(i * 4) + 2]);
   }
   
   leds.show();
@@ -250,15 +223,18 @@ void InitLeds(){
   Serial.println(start_address);
   
   leds.begin();
+
   // blink 12 leds in a row , blinking alle the leds
   for (int w=0;w<ledsPerStrip;w=w+12){
     for (int t=0;t<3;t++){
       for (int i=0;i<12;i++){
-        leds.setPixel(w+i, 255,255,0,0); 
+        //leds.setPixel(w+i, 255,255,0,0);
+        leds.setPixel(w+i, 255,255,0); 
       }
     leds.show();
     }
   }
+  
 }
 
 void BlueBlinkieBlinkie() {
