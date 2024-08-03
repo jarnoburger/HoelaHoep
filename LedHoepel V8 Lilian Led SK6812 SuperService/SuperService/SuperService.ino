@@ -4,10 +4,14 @@
 #include <SPI.h>
 #include <OctoWS2811.h>
 
+// het kunstwerk veracht
+// 560 RGB leds op 1 pin
+// het zijn dan 8 pinnen
+
+
 //------------------------------LED------------------------------------//
-//const int ledsPerStrip   =     12*40;                                // Alle wolkjes x 12 leds. 
-const int ledsPerStrip     = (6*144)+9;                                // Alle ledjes in een cirkel , dus 6 meter x 144 leds + een beetje 
-const int RGBWByteLength   =         6;                                // 1 Int is 4 Bytes. 6 Ints is 24 Bytes is RGB. 8 Ints is 32 Bytes is RGBW
+const int ledsPerStrip     =       4*140;                              // 4x140 rgb leds =  560 leds
+const int RGBWByteLength   =         6;                                // 1 Int is 4 Bytes. 6 Ints is 24 Bytes is RGB. 8 Ints is 32 Bytes is RGB
 DMAMEM int displayMemory[ledsPerStrip * RGBWByteLength];               // The DMA memory display block needs to be big enough to fill all the RGB leds. Is the memory that is sent to the leds.
 int drawingMemory[ledsPerStrip * RGBWByteLength];                      // This is a temp memory block where we park the values in the right order.
 const int config = WS2811_GRB;                                         // WS2811_GRB or WS2811_GRBW
@@ -17,7 +21,7 @@ OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);   // Object
 
 // ----------------- NETWORK -----------------------------//
 byte mac[]     = { 0x90, 0xA2, 0xDA, 0x0D, 0x4C, 0x8C}  ; // the mac adress in HEX of ethernet module/shield
-byte ip[]      = {  192,  168,    1,  108};               // the IP adress of your device, that should be in same universe of the network you are using
+byte ip[]      = {  192,  168,    1,   10};               // the IP adress of your device, that should be in same universe of the network you are using
 byte subnet[]  = {  255,  255,  255,    0};               // alleen de ip adressen van 192.168.0.xxx moeten beantwoord worden (bijv udp-reply)
 byte gateway[] = {  192,  168,    1,    1};               // hier moet de ip adres van de router staan (deze verdeeld de packets overal (dus ook een udp-reply)
 byte dns[]     = {  192,  168,    1,    1};               // hier moet de ip adres van de router staan (is eigenlijk voor WWW , maar moet mee in de initializer
@@ -28,7 +32,7 @@ unsigned int localPort = 6454;                            // DO NOT CHANGE artne
 EthernetUDP Udp;                                          // The class we listen with
 const int first_universe_number     = 0;                  // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as zero.
 const int universeSize              = 8;                  // used for doublecheking if given universe in the artnetpacket  should be dealt with, or not
-const int number_of_channels      = 110*4;                // 512 channels in 1 universe , maar we gebruiken er 480 van, dus we moeten wat overslaan met sturen naar de led >> 8xrgbw=32 channels overslaan.
+const int number_of_channels      = 420;
 byte channel_buffer[number_of_channels];                  // buffer to store filetered DMX data//SHOULD BE SAME AS number_of_channels
 byte buff2[4000]                       ;                  // increase buffer for filtered data to cover size of your total array(removed art-net header)
 const int MAX_BUFFER_UDP          = 768;                  // leave as is , this is big enough to get artnet packets
@@ -126,11 +130,10 @@ void OnDMXFrame(){
   sequenceCount++;
   if (sequenceCount > 7){
       for (int i = 0; i < ledsPerStrip * 8; i++) {
-        
         leds.setPixel(i,
-        buff2[(i * 4) + 0], 
-        buff2[(i * 4) + 1], 
-        buff2[(i * 4) + 2]);
+        buff2[(i * 3) + 0], 
+        buff2[(i * 3) + 1], 
+        buff2[(i * 3) + 2]);
       }
       
       leds.show();
@@ -140,12 +143,13 @@ void OnDMXFrame(){
 
 void ShowLeds(){
     //------send to leds----//
+  int c = 0;
   for (int i = 0; i < ledsPerStrip * 8; i++) {
-    
+    c = i * 3;  
     leds.setPixel(i,
-    buff2[(i * 4) + 0], 
-    buff2[(i * 4) + 1], 
-    buff2[(i * 4) + 2]);
+    buff2[c + 0], 
+    buff2[c + 1], 
+    buff2[c + 2]);
   }
   
   leds.show();
@@ -229,7 +233,7 @@ void InitLeds(){
     for (int t=0;t<3;t++){
       for (int i=0;i<12;i++){
         //leds.setPixel(w+i, 255,255,0,0);
-        leds.setPixel(w+i, 255,255,0); 
+        leds.setPixel(w+i, 64,64,0); 
       }
     leds.show();
     }
@@ -239,14 +243,14 @@ void InitLeds(){
 
 void BlueBlinkieBlinkie() {
   for (int d =0;d<3;d++){
-    for (int b=255; b>0;b=b-8){
+    for (int b=64; b>0;b=b-8){
         for (int i = 0; i < ledsPerStrip * 8; i++) {
           leds.setPixel(i, b, b, 0);
         }
         leds.show();
     }
     
-    for (int b =0; b<255; b=b+8){
+    for (int b =0; b<64; b=b+8){
         for (int i = 0; i < ledsPerStrip * 8; i++) {
           leds.setPixel(i, b, b, 0);
         }
@@ -254,7 +258,7 @@ void BlueBlinkieBlinkie() {
     }
   } 
   
-  for (int b=255; b>0;b=b-8){
+  for (int b=64; b>0;b=b-8){
     for (int i = 0; i < ledsPerStrip * 8; i++) {
       leds.setPixel(i, b, b, 0);
     }
