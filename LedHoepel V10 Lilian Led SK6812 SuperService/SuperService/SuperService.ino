@@ -8,6 +8,10 @@
 // 560 RGB leds op 1 pin
 // het zijn dan 8 pinnen
 
+// Non blocking led blink when a packet arrives
+unsigned long previousMillis = 0;
+const long interval = 10; // interval at which to blink (milliseconds)
+bool ledState = LOW; 
 
 //------------------------------LED------------------------------------//
 const int ledsPerStrip     =       560;                              // 4x140 rgb leds =  560 leds per Pin
@@ -20,7 +24,7 @@ OctoWS2811 leds(ledsPerStrip, displayMemory, drawingMemory, config);   // Object
 //----------------end of octows2811 inputs----------------//
 
 // ----------------- NETWORK -----------------------------//
-byte mac[]     = { 0x90, 0xA2, 0xDA, 0x0D, 0x4C, 0x8C}  ; // the mac adress in HEX of ethernet module/shield
+byte mac[]     = { 0x90, 0xA2, 0xDA, 0x0D, 0x4C, 0x8B}  ; // the mac adress in HEX of ethernet module/shield
 byte ip[]      = {  192,  168,    0,    3};               // the IP adress of your device, that should be in same universe of the network you are using
 byte subnet[]  = {  255,  255,  255,    0};               // alleen de ip adressen van 192.168.0.xxx moeten beantwoord worden (bijv udp-reply)
 byte gateway[] = {  192,  168,    0,    1};               // hier moet de ip adres van de router staan (deze verdeeld de packets overal (dus ook een udp-reply)
@@ -31,7 +35,7 @@ unsigned int localPort = 6454;                            // DO NOT CHANGE artne
 //---------------ARTNET and BUFFERS-----------------------//
 EthernetUDP Udp;                                          // The class we listen with
 const int first_universe_number     = 0;                  // CHANGE FOR YOUR SETUP most software this is 1, some software send out artnet first universe as zero.
-const int universeSize              = 32;                 // used for doublecheking if given universe in the artnetpacket  should be dealt with, or not
+const int universeSize              = 256;                 // used for doublecheking if given universe in the artnetpacket  should be dealt with, or not
 const int number_of_channels      = 420;                  // number of channels used per universe
 byte channel_buffer[number_of_channels];                  // buffer to store filetered DMX data//SHOULD BE SAME AS number_of_channels
 byte buff2[number_of_channels * universeSize] ;           // increase buffer for filtered data to cover size of your total array(removed art-net header)
@@ -81,11 +85,10 @@ void setup() {
 
 void loop() {
   int packetSize = Udp.parsePacket();
-  if (packetSize)
-  
+  if (packetSize)  
   { 
-//      Serial.print("Received packet of size ");//all print can be removed if not debugging
-//      Serial.println(packetSize); < geeft 530 bij een pakket
+      //Serial.print("Received packet of size ");//all print can be removed if not debugging
+      //Serial.println(packetSize); //< geeft 530 bij een pakket
     OnDMXFrame();
 
   }
@@ -94,12 +97,15 @@ void loop() {
 
 void OnDMXFrame(){
   Udp.read(packetBuffer, MAX_BUFFER_UDP);
-  //Serial.print(packetBuffer);
-  //Serial.print("  ");
 
-  //Serial.println("x");
 
-/*  
+/*
+  Serial.print(packetBuffer);
+  Serial.print("  ");
+
+  Serial.println("x");
+
+  
   Serial.println(packetBuffer[0]);
   Serial.println(packetBuffer[1]);
   Serial.println(packetBuffer[2]);
@@ -121,16 +127,18 @@ void OnDMXFrame(){
   int comb = (packetBuffer[15] << 8) | packetBuffer[14];
   Serial.println(comb);
 */
+
   //-------read incoming universe and sequence number and check for data series-------------//
   incoming_universe = bytes_to_short(packetBuffer[15], packetBuffer[14])
   if (incoming_universe ==        6454) { return; }
   if (incoming_universe <            0) { return; }
   if (incoming_universe > universeSize) { return; }
-  //Serial.print("universe number = ");
-  //Serial.println(incoming_universe);
+  
+  Serial.print("universe number = ");
+  Serial.println(incoming_universe);
   
   //-------read incoming sequence-----------------------------------------------------------//
-  byte sequence = packetBuffer[12];
+  //byte sequence = packetBuffer[12];
   //Serial.print("  ");
   //Serial.print("sequence n0. = ");
   //Serial.println(sequence);
@@ -150,16 +158,35 @@ void OnDMXFrame(){
     buff2[i + ((incoming_universe - first_universe_number)*number_of_channels)] = channel_buffer[i - start_address];
   }
 
+// Generate a random printable ASCII character (range: 33 to 126)
+  //char randChar = (char)random(33, 127);
+  // Print it to the Serial Monitor
+  //Serial.print("Random char: ");
+  //Serial.println(randChar);
+
   // only , with a chance of that all universes could be updated by artnet, we update the leds
   sequenceCount ++;
   if (sequenceCount > universeSize){
+
       ShowLeds();
       sequenceCount = 0;
   }
-
 }
 
 void ShowLeds(){
+
+    //Get current time
+  unsigned long currentMillis = millis();
+
+  // Check if it's time to toggle the LED
+  if (currentMillis - previousMillis >= interval) {
+    previousMillis = currentMillis;
+        // Toggle LED state
+    ledState = !ledState;
+    digitalWrite(LED_BUILTIN, ledState);
+  }
+
+
     //------send to leds----//
   int c = 0;
   int strips = 8;
@@ -171,7 +198,6 @@ void ShowLeds(){
     buff2[c + 1], 
     buff2[c + 2]);
   }
-  
   leds.show();
 }
 
@@ -208,6 +234,10 @@ void InitNetwork(){
   delay(250);  
   Serial.println("UDP.begin()                       : SUCCES !");
 
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(250);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(250);
   //if nothing appears after this, then the loop is not receiving your artnet package
 }
 
@@ -261,6 +291,10 @@ void InitLeds(){
 }
 
 void BlueBlinkieBlinkie() {
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(250);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(250);
   for (int d =0;d<3;d++){
     for (int b=64; b>0;b=b-8){
         for (int i = 0; i < ledsPerStrip * 8; i++) {
@@ -283,6 +317,10 @@ void BlueBlinkieBlinkie() {
     }
     leds.show();
   }
+  digitalWrite(LED_BUILTIN, HIGH);
+  delay(250);
+  digitalWrite(LED_BUILTIN, LOW);
+  delay(250);
 }
 
 void ShowBlack(){
